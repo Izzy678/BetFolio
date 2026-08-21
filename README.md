@@ -1,11 +1,11 @@
 # Ledgerline — Betting P&L Tracker
 
-Ledgerline is a private historical betting profit-and-loss tracker. A user creates a device-bound anonymous account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement.
+Ledgerline is a private historical betting profit-and-loss tracker. A user creates a globally unique username and password account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement.
 
 ## Architecture
 
 - Next.js 16 App Router, strict TypeScript, Tailwind CSS 4
-- Supabase Anonymous Auth with `@supabase/ssr` cookie sessions
+- Username/password authentication backed by Supabase Auth and `@supabase/ssr` cookie sessions
 - Supabase PostgreSQL with Row Level Security on every user-owned table
 - Private `betslips` Storage bucket with owner-folder policies
 - Authenticated Edge Functions for username claims, multimodal extraction, and atomic finalization
@@ -32,7 +32,9 @@ The app displays realistic read-only preview data when public Supabase variables
 
 ## Supabase setup
 
-Anonymous sign-ins must be enabled. Local configuration already sets `enable_anonymous_sign_ins = true` in `supabase/config.toml`. For a hosted project, enable Anonymous Sign-Ins under Authentication settings.
+Email/password signups must be enabled and email confirmation must be disabled because Ledgerline does not collect a deliverable email address. Local configuration already sets `enable_anonymous_sign_ins = false` and `enable_confirmations = false` in `supabase/config.toml`. Apply equivalent Auth settings to a hosted project.
+
+The visible username is converted deterministically to an internal, non-deliverable Auth identifier. Supabase Auth stores and verifies the password hash; Ledgerline never stores plaintext passwords or custom password hashes. The case-insensitive unique index on `profiles.username` guarantees one username across all users. The profile UUID remains the same Supabase Auth user UUID used by every owned record and RLS policy.
 
 Apply all schema, RLS, Storage, analytics, and transaction changes with migrations:
 
@@ -89,7 +91,7 @@ npm run build
 
 ## Known V1 limitations
 
-- Anonymous accounts are bound to the current device/session. Username knowledge never grants access, but recovery and cross-device sign-in are not available yet.
+- Users can sign in across devices with their username and password. Automated password reset is unavailable until a real recovery identity such as email or passkey is added.
 - No FX conversion or combined cross-currency P&L.
 - Complex promotional settlements and partial cashouts require manual review and cannot finalize automatically.
 - Dates without an explicit timezone remain optional; the app does not invent one.

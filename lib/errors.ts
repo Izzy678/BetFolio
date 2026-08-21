@@ -1,5 +1,6 @@
 export const errorMessages: Record<string, string> = {
   USERNAME_TAKEN: "That username is already in use. Try another one.",
+  INVALID_CREDENTIALS: "Incorrect username or password.",
   INVALID_USERNAME: "Use 3–24 lowercase letters, numbers, or underscores.",
   INVALID_FILE: "Choose a valid screenshot or PDF.",
   FILE_TOO_LARGE: "That file is larger than 10 MB.",

@@ -20,7 +20,7 @@ export default function Home() {
         <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/[.06] px-3 py-1.5 text-xs font-semibold text-lime-200"><LockKeyhole className="size-3.5" />Private by design · No bookmaker connections</div>
         <h1 className="text-balance text-[clamp(3.3rem,9vw,7rem)] font-semibold leading-[.9] tracking-[-.075em]">Your betting P&amp;L.<br /><span className="text-zinc-500">Across every platform.</span></h1>
         <p className="mx-auto mt-8 max-w-2xl text-balance text-base leading-7 text-zinc-400 sm:text-lg">Upload settled betslips, keep all your betting history in one place, and understand your real profit and loss.</p>
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"><ButtonLink href="/start" className="h-12 px-6 text-[15px]">Start tracking for free <ArrowRight className="size-4" /></ButtonLink><span className="text-xs text-zinc-600">Username only · no email needed</span></div>
+        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"><ButtonLink href="/start" className="h-12 px-6 text-[15px]">Start tracking for free <ArrowRight className="size-4" /></ButtonLink><span className="text-xs text-zinc-600">Username + password · no email needed</span></div>
       </div>
 
       <div className="relative mx-auto mt-20 max-w-5xl animate-rise [animation-delay:150ms]">

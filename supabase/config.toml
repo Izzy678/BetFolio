@@ -1,7 +1,11 @@
 project_id = "bet-pnl-tracker"
 
 [auth]
-enable_anonymous_sign_ins = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
 
 [functions.claim-username]
 verify_jwt = true
