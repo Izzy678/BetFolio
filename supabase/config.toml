@@ -1,0 +1,13 @@
+project_id = "bet-pnl-tracker"
+
+[auth]
+enable_anonymous_sign_ins = true
+
+[functions.claim-username]
+verify_jwt = true
+
+[functions.process-betslip]
+verify_jwt = true
+
+[functions.finalize-bet-import]
+verify_jwt = true

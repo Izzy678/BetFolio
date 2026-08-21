@@ -1,0 +1,2 @@
+-- Bookmaker reference rows are seeded idempotently by the initial migration so
+-- fresh local environments and hosted projects start from the same baseline.
