@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { usernameSchema } from "./validation";
 
+// This is an immutable internal Auth namespace, not a user-facing brand.
+// Keeping it stable ensures existing accounts still resolve after product renames.
 const AUTH_EMAIL_DOMAIN = "users.ledgerline.invalid";
 
 export const passwordSchema = z

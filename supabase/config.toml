@@ -1,4 +1,4 @@
-project_id = "bet-pnl-tracker"
+project_id = "betfolio"
 
 [auth]
 enable_anonymous_sign_ins = false

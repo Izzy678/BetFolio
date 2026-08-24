@@ -1,6 +1,6 @@
-# Ledgerline — Betting P&L Tracker
+# Betfolio — Betting P&L Tracker
 
-Ledgerline is a private historical betting profit-and-loss tracker. A user creates a globally unique username and password account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement.
+Betfolio is a private historical betting profit-and-loss tracker. A user creates a globally unique username and password account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement.
 
 ## Architecture
 
@@ -32,9 +32,9 @@ The app displays realistic read-only preview data when public Supabase variables
 
 ## Supabase setup
 
-Email/password signups must be enabled and email confirmation must be disabled because Ledgerline does not collect a deliverable email address. Local configuration already sets `enable_anonymous_sign_ins = false` and `enable_confirmations = false` in `supabase/config.toml`. Apply equivalent Auth settings to a hosted project.
+Email/password signups must be enabled and email confirmation must be disabled because Betfolio does not collect a deliverable email address. Local configuration already sets `enable_anonymous_sign_ins = false` and `enable_confirmations = false` in `supabase/config.toml`. Apply equivalent Auth settings to a hosted project.
 
-The visible username is converted deterministically to an internal, non-deliverable Auth identifier. Supabase Auth stores and verifies the password hash; Ledgerline never stores plaintext passwords or custom password hashes. The case-insensitive unique index on `profiles.username` guarantees one username across all users. The profile UUID remains the same Supabase Auth user UUID used by every owned record and RLS policy.
+The visible username is converted deterministically to an internal, non-deliverable Auth identifier. Supabase Auth stores and verifies the password hash; Betfolio never stores plaintext passwords or custom password hashes. The case-insensitive unique index on `profiles.username` guarantees one username across all users. The profile UUID remains the same Supabase Auth user UUID used by every owned record and RLS policy.
 
 Apply all schema, RLS, Storage, analytics, and transaction changes with migrations:
 
