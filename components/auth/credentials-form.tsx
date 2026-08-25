@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/client";
 import { credentialsSchema, usernameToAuthEmail } from "@/lib/username/credentials";
 import { normalizeUsername } from "@/lib/username/validation";
+import { useToast } from "@/components/ui/toast";
 
 type Mode = "signup" | "login";
 
@@ -32,6 +33,7 @@ export function CredentialsForm() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const router = useRouter();
+  const toast = useToast();
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -72,9 +74,12 @@ export function CredentialsForm() {
 
       router.replace("/dashboard");
       router.refresh();
+      toast.success(mode === "signup" ? "Account created" : "Signed in");
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : "INTERNAL_ERROR";
-      setError(code === "INVALID_CREDENTIALS" ? "Incorrect username or password." : code === "SIGNUP_FAILED" ? "We couldn’t create this account. Please try again." : friendlyError(code));
+      const message = code === "INVALID_CREDENTIALS" ? "Incorrect username or password." : code === "SIGNUP_FAILED" ? "We couldn’t create this account. Please try again." : friendlyError(code);
+      setError(message);
+      toast.error(mode === "signup" ? "Couldn't create account" : "Couldn't sign in");
     } finally {
       setPending(false);
     }

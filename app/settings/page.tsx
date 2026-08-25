@@ -1,4 +1,4 @@
-import { KeyRound, Laptop, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { getCurrentProfile } from "@/lib/auth";
@@ -7,5 +7,30 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile({ required: true });
-  return <AppShell username={profile!.username}><div className="mx-auto max-w-4xl px-5 py-7 sm:px-8 lg:px-10 lg:py-9"><p className="text-sm text-zinc-500">Account and preferences</p><h1 className="mt-1 text-3xl font-semibold tracking-[-.04em]">Settings</h1><div className="mt-7 grid gap-4"><Card className="p-5 sm:p-6"><h2 className="text-sm font-semibold">Profile</h2><div className="mt-5 grid gap-5 sm:grid-cols-2"><div><p className="text-xs text-zinc-600">Username</p><p className="mt-2 text-sm font-semibold">@{profile!.username}</p></div><div><p className="text-xs text-zinc-600">Base currency</p><p className="mt-2 text-sm font-semibold">{profile!.base_currency ?? "Not set"}</p></div><div><p className="text-xs text-zinc-600">Account status</p><p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="size-4 text-lime-300" />Password-protected account</p></div></div></Card><Card className="border-lime-300/10 bg-lime-300/[.03] p-5 sm:p-6"><div className="flex gap-4"><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-lime-300/10 text-lime-300"><Laptop className="size-5" /></div><div><h2 className="text-sm font-semibold text-lime-100">Your history follows your account.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">Sign in with the same unique username and password on another device to access your Supabase-backed betting history.</p></div></div></Card><Card className="p-5 sm:p-6"><div className="flex gap-4"><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-400/10 text-indigo-300"><KeyRound className="size-5" /></div><div><h2 className="text-sm font-semibold">Account recovery</h2><p className="mt-2 text-sm leading-6 text-zinc-500">Because no real email or phone is collected, automated password reset is not available yet. Email recovery, passkeys, Google, and Apple identity linking are planned for a future release.</p><div className="mt-4 flex flex-wrap gap-2">{["Email recovery", "Passkey", "Google", "Apple"].map((item) => <span key={item} className="rounded-lg border border-white/[.07] bg-white/[.025] px-3 py-2 text-xs text-zinc-600">{item} · Coming later</span>)}</div></div></div></Card></div></div></AppShell>;
+  return (
+    <AppShell username={profile!.username}>
+      <div className="mx-auto max-w-4xl px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
+        <p className="text-sm text-zinc-500">Account and preferences</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-[-.04em]">Settings</h1>
+        <div className="mt-7 grid gap-4">
+          <Card className="p-5 sm:p-6">
+            <h2 className="text-sm font-semibold">Profile</h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-zinc-600">Username</p>
+                <p className="mt-2 text-sm font-semibold">@{profile!.username}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-600">Account status</p>
+                <p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold">
+                  <ShieldCheck className="size-4 text-lime-300" />
+                  Password-protected account
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </AppShell>
+  );
 }

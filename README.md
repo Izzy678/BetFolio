@@ -1,6 +1,6 @@
 # Betfolio — Betting P&L Tracker
 
-Betfolio is a private historical betting profit-and-loss tracker. A user creates a globally unique username and password account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement.
+Betfolio is a private historical betting profit-and-loss tracker. A user creates a globally unique username and password account, uploads a settled betslip, reviews structured extraction, and confirms a deterministic ledger import. It does not offer picks, predictions, live odds, or wager placement(maybe soon tho).
 
 ## Architecture
 
