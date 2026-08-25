@@ -8,5 +8,6 @@ describe("deterministic ledger", () => {
   it("converts net winnings to a gross settlement", () => expect(calculatePnl(createLedgerEntries({ ...base, status: "won", displayedReturn: 30, returnKind: "net_profit" }))).toBe(30));
   it("records a void as a neutral refund", () => expect(calculatePnl(createLedgerEntries({ ...base, status: "void", displayedReturn: 20, returnKind: "refund" }))).toBe(0));
   it("records full cashout", () => expect(calculatePnl(createLedgerEntries({ ...base, status: "cashout", displayedReturn: 27.5, returnKind: "cashout" }))).toBe(7.5));
+  it("records pending stake as money at risk", () => expect(calculatePnl(createLedgerEntries({ ...base, status: "pending", displayedReturn: null, returnKind: null }))).toBe(-20));
   it("calculates ROI and avoids division by zero", () => { expect(calculateRoi(30, 100)).toBe(30); expect(calculateRoi(30, 0)).toBeNull(); });
 });

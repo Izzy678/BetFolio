@@ -11,6 +11,9 @@ export const errorMessages: Record<string, string> = {
   NOT_A_BETSLIP: "This file does not appear to be a betting slip.",
   GEMINI_FAILED: "We couldn’t read this betslip. Please try again.",
   IMPORT_ALREADY_FINALIZED: "This betslip has already been added.",
+  UPLOAD_NOT_READY: "This upload is not ready to import yet. Try uploading again.",
+  BET_NOT_FOUND: "That bet could not be found.",
+  INVALID_IMPORT: "Check the bet summary fields and try again.",
   INTERNAL_ERROR: "Something went wrong. Please try again.",
 };
 

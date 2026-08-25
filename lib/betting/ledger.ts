@@ -10,7 +10,7 @@ export function createLedgerEntries(input: Pick<ConfirmedBetInput, "status" | "c
     entries.push({ type: "stake", amount: money(-input.cashStake), currency: input.currency });
   }
 
-  if (input.status === "lost") return entries;
+  if (input.status === "lost" || input.status === "pending") return entries;
 
   if (input.status === "void" || input.status === "push") {
     if (input.displayedReturn != null && Math.abs(input.displayedReturn - input.cashStake) > 0.009) throw new Error("Refund must match cash stake.");

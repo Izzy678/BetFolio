@@ -1,5 +1,5 @@
 export const betTypes = ["single", "accumulator", "bet_builder", "system", "each_way", "other"] as const;
-export const betStatuses = ["won", "lost", "void", "push", "cashout", "partial_cashout", "settled_unknown"] as const;
+export const betStatuses = ["won", "lost", "void", "push", "cashout", "partial_cashout", "settled_unknown", "pending"] as const;
 export const legResults = ["won", "lost", "void", "push", "unknown"] as const;
 export const returnKinds = ["gross_return", "net_profit", "refund", "cashout", "unknown"] as const;
 export const transactionTypes = ["stake", "settlement", "refund", "cashout", "bonus", "fee", "tax", "adjustment"] as const;
