@@ -224,17 +224,19 @@ with filtered_tx as (
 ), bet_summary as (
   select count(*) total_bets, count(*) filter(where status='won') wins, count(*) filter(where status='lost') losses from filtered_bets
 ), daily_base as (
-  select occurred_at::date day, sum(amount) pnl from filtered_tx group by 1
+  select occurred_at::date as bucket_day, sum(amount) pnl from filtered_tx group by 1
 ), daily as (
-  select day, pnl, sum(pnl) over(order by day) cumulative from daily_base
+  select bucket_day, pnl, sum(pnl) over(order by bucket_day) cumulative from daily_base
 ), by_bookmaker as (
   select coalesce(bm.name,b.bookmaker_name_raw,'Unknown bookmaker') name, sum(t.amount) pnl, count(distinct b.id) bets
   from filtered_bets b join filtered_tx t on t.bet_id=b.id left join public.bookmakers bm on bm.id=b.bookmaker_id group by 1
 ), recent as (
   select b.id, coalesce(bm.name,b.bookmaker_name_raw,'Unknown bookmaker') bookmaker, b.bet_type, b.status, b.cash_stake stake,
-    coalesce(sum(t.amount),0) pnl, b.settled_at from filtered_bets b left join public.bookmakers bm on bm.id=b.bookmaker_id left join public.bet_transactions t on t.bet_id=b.id group by b.id,bm.name order by b.settled_at desc nulls last limit 8
+    coalesce(sum(t.amount),0) pnl, b.settled_at from filtered_bets b left join public.bookmakers bm on bm.id=b.bookmaker_id left join public.bet_transactions t on t.bet_id=b.id
+    group by b.id, bm.name, b.bookmaker_name_raw, b.bet_type, b.status, b.cash_stake, b.settled_at
+    order by b.settled_at desc nulls last limit 8
 ), currencies as (select distinct currency from public.bets where user_id=auth.uid())
-select jsonb_build_object('currency',upper(p_currency),'summary',jsonb_build_object('netPnl',s.net_pnl,'cashStaked',s.cash_staked,'totalReturned',s.total_returned,'roi',case when s.cash_staked=0 then null else round(s.net_pnl/s.cash_staked*100,2) end,'totalBets',bs.total_bets,'winRate',case when bs.wins+bs.losses=0 then null else round(bs.wins::numeric/(bs.wins+bs.losses)*100,1) end),'daily',coalesce((select jsonb_agg(jsonb_build_object('date',day,'pnl',pnl,'cumulative',cumulative) order by day) from daily),'[]'::jsonb),'bookmakers',coalesce((select jsonb_agg(jsonb_build_object('name',name,'pnl',pnl,'bets',bets) order by pnl desc) from by_bookmaker),'[]'::jsonb),'recent',coalesce((select jsonb_agg(jsonb_build_object('id',id,'bookmaker',bookmaker,'betType',bet_type,'status',status,'stake',stake,'pnl',pnl,'settledAt',settled_at)) from recent),'[]'::jsonb),'currencies',coalesce((select jsonb_agg(currency order by currency) from currencies),jsonb_build_array(upper(p_currency)))) from summary s cross join bet_summary bs;
+select jsonb_build_object('currency',upper(p_currency),'summary',jsonb_build_object('netPnl',s.net_pnl,'cashStaked',s.cash_staked,'totalReturned',s.total_returned,'roi',case when s.cash_staked=0 then null else round(s.net_pnl/s.cash_staked*100,2) end,'totalBets',bs.total_bets,'winRate',case when bs.wins+bs.losses=0 then null else round(bs.wins::numeric/(bs.wins+bs.losses)*100,1) end),'daily',coalesce((select jsonb_agg(jsonb_build_object('date',bucket_day,'pnl',pnl,'cumulative',cumulative) order by bucket_day) from daily),'[]'::jsonb),'bookmakers',coalesce((select jsonb_agg(jsonb_build_object('name',name,'pnl',pnl,'bets',bets) order by pnl desc) from by_bookmaker),'[]'::jsonb),'recent',coalesce((select jsonb_agg(jsonb_build_object('id',id,'bookmaker',bookmaker,'betType',bet_type,'status',status,'stake',stake,'pnl',pnl,'settledAt',settled_at)) from recent),'[]'::jsonb),'currencies',coalesce((select jsonb_agg(currency order by currency) from currencies),jsonb_build_array(upper(p_currency)))) from summary s cross join bet_summary bs;
 $$;
 revoke all on function public.dashboard_snapshot(text,integer) from public;
 grant execute on function public.dashboard_snapshot(text,integer) to authenticated;
