@@ -1,42 +1,67 @@
 import { z } from "zod";
-import { betStatuses, betTypes, legResults, returnKinds } from "@/lib/betting/types";
+import type { ConfirmedBetInput } from "@/lib/betting/types";
+import { betTypes, type BetType } from "@/lib/betting/types";
+import { fromDateInputValue } from "@/lib/dates";
 
-const nullableNumber = z.number().finite().nonnegative().nullable();
+export const extractionStatuses = ["won", "lost", "cashout", "pending"] as const;
+export const extractionBetTypes = betTypes;
 
 export const betslipExtractionSchema = z.object({
-  documentType: z.enum(["settled_betslip", "unsettled_betslip", "not_a_betslip", "unknown"]),
-  bookmaker: z.object({ name: z.string().trim().min(1).nullable() }),
-  externalBetId: z.string().trim().min(1).nullable(),
+  bookmakerName: z.string().trim().nullable(),
   betType: z.enum(betTypes).nullable(),
-  status: z.enum(betStatuses).nullable(),
+  status: z.enum(extractionStatuses).nullable(),
   currency: z.string().trim().nullable(),
-  cashStake: nullableNumber,
-  promotionalStake: nullableNumber,
-  displayedReturn: nullableNumber,
-  returnKind: z.enum(returnKinds).nullable(),
-  totalOddsRaw: z.string().trim().nullable(),
-  totalOddsDecimal: nullableNumber,
-  oddsFormat: z.enum(["decimal", "fractional", "american", "unknown"]).nullable(),
-  placedAt: z.string().nullable(),
-  settledAt: z.string().nullable(),
-  legs: z.array(z.object({
-    position: z.number().int().positive(),
-    sport: z.string().nullable(),
-    competition: z.string().nullable(),
-    eventName: z.string().nullable(),
-    market: z.string().nullable(),
-    selection: z.string().nullable(),
-    oddsRaw: z.string().nullable(),
-    oddsDecimal: nullableNumber,
-    result: z.enum(legResults),
-  })).max(100),
-  evidence: z.object({
-    stakeText: z.string().nullable(),
-    returnText: z.string().nullable(),
-    statusText: z.string().nullable(),
-    betIdText: z.string().nullable(),
-  }),
+  stake: z.number().finite().nonnegative().nullable(),
+  returnAmount: z.number().finite().nonnegative().nullable(),
+  totalOdds: z.number().finite().nonnegative().nullable(),
+  placedAt: z.string().trim().nullable(),
+  settledAt: z.string().trim().nullable(),
 });
 
 export type BetslipExtraction = z.infer<typeof betslipExtractionSchema>;
-export const EXTRACTION_SCHEMA_VERSION = "betslip-extraction-v1";
+export const EXTRACTION_SCHEMA_VERSION = "betslip-extraction-v4";
+
+function toIsoDate(value: string | null) {
+  if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return fromDateInputValue(value);
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return null;
+  return new Date(parsed).toISOString();
+}
+
+export function toConfirmedBetInput(extraction: BetslipExtraction): ConfirmedBetInput | null {
+  if (!extraction.status || !extraction.currency || extraction.stake == null || !extraction.placedAt) return null;
+
+  const placedAt = toIsoDate(extraction.placedAt);
+  if (!placedAt) return null;
+  const settledAt = extraction.status === "pending" ? null : toIsoDate(extraction.settledAt) ?? placedAt;
+
+  return {
+    bookmakerName: extraction.bookmakerName,
+    externalBetId: null,
+    betType: extraction.betType ?? "single",
+    status: extraction.status,
+    currency: extraction.currency.toUpperCase(),
+    cashStake: extraction.stake,
+    promotionalStake: 0,
+    displayedReturn: extraction.status === "lost" ? 0 : extraction.returnAmount,
+    returnKind: extraction.status === "won" ? "gross_return" : extraction.status === "cashout" ? "cashout" : null,
+    totalOddsRaw: extraction.totalOdds == null ? null : String(extraction.totalOdds),
+    totalOddsDecimal: extraction.totalOdds,
+    oddsFormat: extraction.totalOdds == null ? null : "decimal",
+    placedAt,
+    settledAt,
+    legs: [],
+  };
+}
+
+export function normalizeBetType(value: unknown): BetType {
+  if (typeof value !== "string") return "single";
+  const raw = value.trim().toLowerCase();
+  if ((betTypes as readonly string[]).includes(raw)) return raw as BetType;
+  if (/multi|acca|accumulator|parlay|combo/.test(raw)) return "accumulator";
+  if (/builder/.test(raw)) return "bet_builder";
+  if (/system/.test(raw)) return "system";
+  if (/each.?way|eachway/.test(raw)) return "each_way";
+  return "single";
+}
