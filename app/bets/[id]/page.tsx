@@ -1,34 +1,140 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, ReceiptText } from "lucide-react";
+import { ArrowLeft, ReceiptText } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { EditBetForm } from "@/components/bets/edit-bet-form";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getCurrentProfile } from "@/lib/auth";
 import { previewBets } from "@/lib/bets";
-import { mockExtractions } from "@/lib/gemini/fixtures";
 import { createLedgerEntries, calculatePnl } from "@/lib/betting/ledger";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, titleCase } from "@/lib/utils";
+import { formatDisplayDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
 export default async function BetDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const profile = await getCurrentProfile({ required: true }); const { id } = await params;
+  const profile = await getCurrentProfile({ required: true });
+  const { id } = await params;
   const mock = previewBets.find((item) => item.id === id) ?? previewBets[0];
-  type DetailBet = typeof mock & { promoStake: number; grossReturn: number | null; placedAt: string | null; sourceUploadId: string | null; legs: typeof mockExtractions.winning_accumulator.legs; transactions: ReturnType<typeof createLedgerEntries> };
-  let bet: DetailBet = { ...mock, promoStake: 0, grossReturn: 94.4, placedAt: "2026-08-20T15:18:00Z", sourceUploadId: "preview", legs: mockExtractions.winning_accumulator.legs, transactions: createLedgerEntries({ status: "won", currency: "GBP", cashStake: 20, displayedReturn: 94.4, returnKind: "gross_return" }) };
-  let sourceUrl: string | null = null;
+  type DetailBet = typeof mock & {
+    promoStake: number;
+    grossReturn: number | null;
+    placedAt: string | null;
+    transactions: ReturnType<typeof createLedgerEntries>;
+  };
+  let bet: DetailBet = {
+    ...mock,
+    promoStake: 0,
+    grossReturn: 94.4,
+    placedAt: "2026-08-20T15:18:00Z",
+    transactions: createLedgerEntries({ status: "won", currency: "GBP", cashStake: 20, displayedReturn: 94.4, returnKind: "gross_return" }),
+  };
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
-    const { data } = await supabase.from("bets").select("*, bookmakers(name), bet_legs(*), bet_transactions(*)").eq("id", id).single();
+    const { data } = await supabase.from("bets").select("*, bookmakers(name), bet_transactions(*)").eq("id", id).single();
     if (!data) notFound();
     const bookmaker = data.bookmakers as { name?: string } | null;
-    const legs = data.bet_legs as typeof mockExtractions.winning_accumulator.legs;
-    const transactions = (data.bet_transactions as Array<{ type: string; amount: string; currency: string }>).map((item) => ({ type: item.type as ReturnType<typeof createLedgerEntries>[number]["type"], amount: Number(item.amount), currency: item.currency }));
-    bet = { id: data.id as string, bookmaker: bookmaker?.name ?? data.bookmaker_name_raw ?? "Unknown bookmaker", externalBetId: data.external_bet_id as string | null, betType: data.bet_type as string, status: data.status as string, currency: data.currency as string, cashStake: Number(data.cash_stake), promoStake: Number(data.promo_stake), odds: data.total_odds_decimal == null ? null : Number(data.total_odds_decimal), pnl: calculatePnl(transactions), grossReturn: data.gross_return == null ? null : Number(data.gross_return), placedAt: data.placed_at as string | null, settledAt: data.settled_at as string | null, sourceUploadId: data.source_upload_id as string | null, legs, transactions };
-    if (bet.sourceUploadId) { const { data: upload } = await supabase.from("bet_uploads").select("storage_path").eq("id", bet.sourceUploadId).single(); if (upload) { const { data: signed } = await supabase.storage.from("betslips").createSignedUrl(upload.storage_path as string, 120); sourceUrl = signed?.signedUrl ?? null; } }
+    const transactions = (data.bet_transactions as Array<{ type: string; amount: string; currency: string; occurred_at?: string }>).map((item) => ({
+      type: item.type as ReturnType<typeof createLedgerEntries>[number]["type"],
+      amount: Number(item.amount),
+      currency: item.currency,
+    }));
+    bet = {
+      id: data.id as string,
+      bookmaker: bookmaker?.name ?? data.bookmaker_name_raw ?? "Unknown bookmaker",
+      externalBetId: data.external_bet_id as string | null,
+      betType: data.bet_type as string,
+      status: data.status as string,
+      currency: data.currency as string,
+      cashStake: Number(data.cash_stake),
+      promoStake: Number(data.promo_stake),
+      odds: data.total_odds_decimal == null ? null : Number(data.total_odds_decimal),
+      pnl: calculatePnl(transactions),
+      grossReturn: data.gross_return == null ? null : Number(data.gross_return),
+      placedAt: data.placed_at as string | null,
+      settledAt: data.settled_at as string | null,
+      transactions,
+    };
   }
-  const facts = [["Status", titleCase(bet.status)], ["Cash stake", formatMoney(bet.cashStake, bet.currency)], ["Promo stake", formatMoney(bet.promoStake, bet.currency)], ["Total odds", bet.odds?.toFixed(2) ?? "—"], ["Gross return", bet.grossReturn == null ? "—" : formatMoney(bet.grossReturn, bet.currency)], ["Net P&L", formatMoney(bet.pnl, bet.currency, true)], ["Placed", bet.placedAt ? new Date(bet.placedAt).toLocaleString() : "—"], ["Settled", bet.settledAt ? new Date(bet.settledAt).toLocaleString() : "—"]];
-  return <AppShell username={profile!.username}><div className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-10 lg:py-9"><ButtonLink href="/bets" variant="ghost" className="-ml-3 h-9"><ArrowLeft className="size-4" />Bet history</ButtonLink><div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="flex items-center gap-2"><span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${bet.status === "won" ? "bg-lime-300/10 text-lime-300" : bet.status === "lost" ? "bg-red-300/10 text-red-300" : "bg-white/[.06] text-zinc-400"}`}>{titleCase(bet.status)}</span><span className="text-xs text-zinc-600">{titleCase(bet.betType)}</span></div><h1 className="mt-3 text-3xl font-semibold tracking-[-.04em]">{bet.bookmaker}</h1><p className="mt-2 font-mono text-xs text-zinc-600">Bet ID {bet.externalBetId ?? "not recorded"}</p></div>{sourceUrl && <a href={sourceUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[.04] px-4 text-xs font-semibold"><Download className="size-4" />View source slip</a>}</div><div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_.8fr]"><div className="grid gap-4"><Card className="p-5 sm:p-6"><h2 className="text-sm font-semibold">Settlement</h2><div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-4">{facts.map(([label, value]) => <div key={label}><p className="text-[11px] font-medium text-zinc-600">{label}</p><p className={`mt-1.5 text-sm font-semibold ${label === "Net P&L" ? bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "" : ""}`}>{value}</p></div>)}</div></Card><Card className="p-5 sm:p-6"><h2 className="text-sm font-semibold">Selections</h2><div className="mt-4 divide-y divide-white/[.06]">{bet.legs.length ? bet.legs.map((leg) => <div key={leg.position} className="grid grid-cols-[28px_1fr_auto] gap-3 py-4"><span className="grid size-6 place-items-center rounded-full bg-lime-300/10 text-[10px] font-bold text-lime-300">{leg.position}</span><div><p className="text-sm font-semibold">{leg.selection ?? "Unknown selection"}</p><p className="mt-1 text-xs text-zinc-600">{leg.eventName} · {leg.market}</p></div><span className="text-sm font-semibold text-zinc-400">{leg.oddsDecimal?.toFixed(2) ?? "—"}</span></div>) : <p className="py-8 text-center text-sm text-zinc-600">No individual selections were recorded.</p>}</div></Card></div><Card className="h-fit p-5 sm:p-6"><div className="flex items-center gap-2"><ReceiptText className="size-4 text-lime-300" /><h2 className="text-sm font-semibold">Ledger</h2></div><p className="mt-2 text-xs leading-5 text-zinc-600">Signed movements are the source of truth for P&amp;L.</p><div className="mt-5 divide-y divide-white/[.06]">{bet.transactions.map((entry, index) => <div key={`${entry.type}-${index}`} className="flex items-center justify-between py-4"><div><p className="text-sm font-medium">{titleCase(entry.type)}</p><p className="mt-1 text-[11px] text-zinc-600">{bet.settledAt ? new Date(bet.settledAt).toLocaleDateString() : "Settlement date"}</p></div><span className={`text-sm font-semibold ${entry.amount > 0 ? "text-lime-300" : "text-zinc-300"}`}>{formatMoney(entry.amount, bet.currency, true)}</span></div>)}</div><div className="mt-3 flex items-center justify-between rounded-xl bg-white/[.04] p-4"><span className="text-xs font-semibold text-zinc-500">Net P&amp;L</span><span className={`text-lg font-semibold ${bet.pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{formatMoney(bet.pnl, bet.currency, true)}</span></div></Card></div></div></AppShell>;
+  const facts = [
+    ["Status", titleCase(bet.status)],
+    ["Bet type", titleCase(bet.betType)],
+    ["Stake", formatMoney(bet.cashStake, bet.currency)],
+    ["Return", bet.grossReturn == null ? "—" : formatMoney(bet.grossReturn, bet.currency)],
+    ["Net P&L", formatMoney(bet.pnl, bet.currency, true)],
+    ["Placed", formatDisplayDate(bet.placedAt)],
+    ["Settled", formatDisplayDate(bet.settledAt)],
+  ];
+  return (
+    <AppShell username={profile!.username}>
+      <div className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
+        <ButtonLink href="/bets" variant="ghost" className="-ml-3 h-9"><ArrowLeft className="size-4" />Bet history</ButtonLink>
+        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${bet.status === "won" ? "bg-lime-300/10 text-lime-300" : bet.status === "lost" ? "bg-red-300/10 text-red-300" : "bg-white/[.06] text-zinc-400"}`}>{titleCase(bet.status)}</span>
+            </div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-.04em]">{bet.bookmaker}</h1>
+          </div>
+        </div>
+        <div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+          <div className="grid gap-4">
+            <Card className="p-5 sm:p-6">
+              <h2 className="text-sm font-semibold">Bet summary</h2>
+              <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3">
+                {facts.map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-[11px] font-medium text-zinc-600">{label}</p>
+                    <p className={`mt-1.5 text-sm font-semibold ${label === "Net P&L" ? (bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "") : ""}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <EditBetForm
+              bet={{
+                id: bet.id,
+                bookmaker: bet.bookmaker,
+                betType: bet.betType,
+                status: bet.status,
+                currency: bet.currency,
+                cashStake: bet.cashStake,
+                grossReturn: bet.grossReturn,
+                odds: bet.odds,
+                placedAt: bet.placedAt,
+                settledAt: bet.settledAt,
+              }}
+            />
+          </div>
+          <Card className="h-fit p-5 sm:p-6">
+            <div className="flex items-center gap-2">
+              <ReceiptText className="size-4 text-lime-300" />
+              <h2 className="text-sm font-semibold">Ledger</h2>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-zinc-600">Cash movements used for your P&amp;L.</p>
+            <div className="mt-5 divide-y divide-white/[.06]">
+              {bet.transactions.map((entry, index) => (
+                <div key={`${entry.type}-${index}`} className="flex items-center justify-between py-4">
+                  <div>
+                    <p className="text-sm font-medium">{titleCase(entry.type)}</p>
+                    <p className="mt-1 text-[11px] text-zinc-600">
+                      {entry.type === "stake"
+                        ? (bet.placedAt ? formatDisplayDate(bet.placedAt) : "Placed date")
+                        : (bet.settledAt ? formatDisplayDate(bet.settledAt) : "Settlement date")}
+                    </p>
+                  </div>
+                  <span className={`text-sm font-semibold ${entry.amount > 0 ? "text-lime-300" : "text-zinc-300"}`}>{formatMoney(entry.amount, bet.currency, true)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-white/[.04] p-4">
+              <span className="text-xs font-semibold text-zinc-500">Net P&amp;L</span>
+              <span className={`text-lg font-semibold ${bet.pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{formatMoney(bet.pnl, bet.currency, true)}</span>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </AppShell>
+  );
 }
