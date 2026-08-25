@@ -23,7 +23,8 @@ export const usernameSchema = z
       .string()
       .min(3, "Username must be at least 3 characters.")
       .max(24, "Username must be at most 24 characters.")
-      .regex(/^[a-z0-9_]+$/, "Use only lowercase letters, numbers, and underscores.")
+      .refine((value) => !value.includes("@"), "Use your Betfolio username, not an email address.")
+      .regex(/^[a-z0-9_]+$/, "Username can only use letters, numbers, and underscores.")
       .refine((value) => !RESERVED_USERNAMES.has(value), "That username is reserved."),
   );
 

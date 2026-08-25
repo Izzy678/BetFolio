@@ -25,28 +25,48 @@ async function claimUsername(username: string) {
   if (!data?.ok) throw new Error(data?.code ?? "INTERNAL_ERROR");
 }
 
+function fieldError(issues: { path: PropertyKey[]; message: string }[], field: string) {
+  return issues.find((issue) => issue.path[0] === field)?.message ?? "";
+}
+
 export function CredentialsForm() {
   const [mode, setMode] = useState<Mode>("signup");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
   const router = useRouter();
   const toast = useToast();
 
+  function clearFieldErrors() {
+    setUsernameError("");
+    setPasswordError("");
+    setFormError("");
+  }
+
   function switchMode(next: Mode) {
     setMode(next);
-    setError("");
+    clearFieldErrors();
     setPassword("");
   }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    setError("");
+    clearFieldErrors();
     const result = credentialsSchema.safeParse({ username, password });
-    if (!result.success) return setError(result.error.issues[0]?.message ?? "Check your username and password.");
-    if (!isSupabaseConfigured()) { router.push("/dashboard"); return; }
+    if (!result.success) {
+      const issues = result.error.issues;
+      setUsernameError(fieldError(issues, "username"));
+      setPasswordError(fieldError(issues, "password"));
+      return;
+    }
+    if (!isSupabaseConfigured()) {
+      router.push("/dashboard");
+      return;
+    }
 
     setPending(true);
     try {
@@ -77,24 +97,123 @@ export function CredentialsForm() {
       toast.success(mode === "signup" ? "Account created" : "Signed in");
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : "INTERNAL_ERROR";
-      const message = code === "INVALID_CREDENTIALS" ? "Incorrect username or password." : code === "SIGNUP_FAILED" ? "We couldn’t create this account. Please try again." : friendlyError(code);
-      setError(message);
+      const message =
+        code === "INVALID_CREDENTIALS"
+          ? "Incorrect username or password."
+          : code === "SIGNUP_FAILED"
+            ? "We couldn’t create this account. Please try again."
+            : friendlyError(code);
+      if (code === "USERNAME_TAKEN") setUsernameError(message);
+      else setFormError(message);
       toast.error(mode === "signup" ? "Couldn't create account" : "Couldn't sign in");
     } finally {
       setPending(false);
     }
   }
 
-  return <div>
-    <div className="mb-6 grid grid-cols-2 rounded-xl bg-black/25 p-1" role="tablist" aria-label="Account action">
-      <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => switchMode("signup")} className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "signup" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}>Create account</button>
-      <button type="button" role="tab" aria-selected={mode === "login"} onClick={() => switchMode("login")} className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "login" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}>Sign in</button>
+  return (
+    <div>
+      <div className="mb-6 grid grid-cols-2 rounded-xl bg-black/25 p-1" role="tablist" aria-label="Account action">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "signup"}
+          onClick={() => switchMode("signup")}
+          className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "signup" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+        >
+          Create account
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "login"}
+          onClick={() => switchMode("login")}
+          className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "login" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+        >
+          Sign in
+        </button>
+      </div>
+      <form onSubmit={submit} className="grid gap-5">
+        <label className="grid gap-2 text-sm font-medium text-zinc-300">
+          <span>Username</span>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600">@</span>
+            <Input
+              value={username}
+              onChange={(event) => {
+                setUsername(normalizeUsername(event.target.value));
+                setUsernameError("");
+                setFormError("");
+              }}
+              className="pl-8"
+              placeholder="your_username"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              maxLength={24}
+              aria-invalid={Boolean(usernameError)}
+            />
+          </div>
+          {usernameError ? (
+            <span role="alert" className="text-xs font-normal text-red-300">
+              {usernameError}
+            </span>
+          ) : (
+            <span className="text-xs font-normal text-zinc-600">Not an email · 3–24 characters · letters, numbers, underscores</span>
+          )}
+        </label>
+        <label className="grid gap-2 text-sm font-medium text-zinc-300">
+          <span>Password</span>
+          <div className="relative">
+            <Input
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setPasswordError("");
+                setFormError("");
+              }}
+              type={showPassword ? "text" : "password"}
+              placeholder={mode === "signup" ? "Create a password" : "Enter your password"}
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              className="pr-11"
+              maxLength={72}
+              aria-invalid={Boolean(passwordError)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+          {passwordError ? (
+            <span role="alert" className="text-xs font-normal text-red-300">
+              {passwordError}
+            </span>
+          ) : (
+            mode === "signup" && <span className="text-xs font-normal text-zinc-600">At least 8 characters</span>
+          )}
+        </label>
+        {formError && (
+          <span role="alert" className="text-sm text-red-300">
+            {formError}
+          </span>
+        )}
+        <Button disabled={pending} className="w-full">
+          {pending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              {mode === "signup" ? "Creating account…" : "Signing in…"}
+            </>
+          ) : (
+            <>
+              {mode === "signup" ? "Create account" : "Sign in"} <ArrowRight className="size-4" />
+            </>
+          )}
+        </Button>
+      </form>
     </div>
-    <form onSubmit={submit} className="grid gap-5">
-      <label className="grid gap-2 text-sm font-medium text-zinc-300"><span>Username</span><div className="relative"><span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600">@</span><Input value={username} onChange={(event) => setUsername(normalizeUsername(event.target.value))} className="pl-8" placeholder="your_username" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={24} /></div><span className="text-xs font-normal text-zinc-600">3–24 characters · letters, numbers, underscores</span></label>
-      <label className="grid gap-2 text-sm font-medium text-zinc-300"><span>Password</span><div className="relative"><Input value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} placeholder={mode === "signup" ? "Create a secure password" : "Enter your password"} autoComplete={mode === "signup" ? "new-password" : "current-password"} className="pr-11" maxLength={72} /><button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button></div>{mode === "signup" && <span className="text-xs font-normal text-zinc-600">At least 8 characters</span>}</label>
-      {error && <span role="alert" className="text-sm text-red-300">{error}</span>}
-      <Button disabled={pending} className="w-full">{pending ? <><Loader2 className="size-4 animate-spin" />{mode === "signup" ? "Creating account…" : "Signing in…"}</> : <>{mode === "signup" ? "Create account" : "Sign in"} <ArrowRight className="size-4" /></>}</Button>
-    </form>
-  </div>;
+  );
 }
