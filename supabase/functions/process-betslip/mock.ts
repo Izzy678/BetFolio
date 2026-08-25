@@ -1,13 +1,19 @@
-export const mockWinningAccumulator = {
-  documentType: "settled_betslip", bookmaker: { name: "Bet365" }, externalBetId: "MOCK-ACC-9482612", betType: "accumulator", status: "won", currency: "GBP", cashStake: 20, promotionalStake: 0, displayedReturn: 94.4, returnKind: "gross_return", totalOddsRaw: "4.72", totalOddsDecimal: 4.72, oddsFormat: "decimal", placedAt: null, settledAt: null,
-  legs: [{ position: 1, sport: "Football", competition: "Premier League", eventName: "Arsenal v Everton", market: "Match Result", selection: "Arsenal", oddsRaw: "1.65", oddsDecimal: 1.65, result: "won" }, { position: 2, sport: "Football", competition: "Premier League", eventName: "Liverpool v Brighton", market: "Total Goals", selection: "Over 2.5", oddsRaw: "2.86", oddsDecimal: 2.86, result: "won" }], evidence: { stakeText: "Stake £20.00", returnText: "Returns £94.40", statusText: "Won", betIdText: "MOCK-ACC-9482612" },
+export const mockDefault = {
+  bookmakerName: "Bet365",
+  betType: "accumulator",
+  status: "won",
+  currency: "GBP",
+  stake: 20,
+  returnAmount: 94.4,
+  totalOdds: 4.72,
+  placedAt: "2026-08-20T15:18:00.000Z",
+  settledAt: "2026-08-20T20:42:00.000Z",
 };
 
 export function mockForFilename(filename: string) {
   const lower = filename.toLowerCase();
-  if (lower.includes("lost")) return { ...mockWinningAccumulator, externalBetId: "MOCK-LOST-1", betType: "single", status: "lost", displayedReturn: 0, returnKind: "gross_return", legs: [mockWinningAccumulator.legs[0]] };
-  if (lower.includes("void")) return { ...mockWinningAccumulator, externalBetId: "MOCK-VOID-1", betType: "single", status: "void", displayedReturn: 20, returnKind: "refund", legs: [] };
-  if (lower.includes("cashout")) return { ...mockWinningAccumulator, externalBetId: "MOCK-CASH-1", betType: "single", status: "cashout", displayedReturn: 27.5, returnKind: "cashout", legs: [] };
-  if (lower.includes("ambiguous")) return { ...mockWinningAccumulator, externalBetId: null, bookmaker: { name: null }, status: "partial_cashout", currency: null, cashStake: null, displayedReturn: 18, returnKind: "unknown", legs: [] };
-  return mockWinningAccumulator;
+  if (lower.includes("lost")) return { ...mockDefault, bookmakerName: "Sky Bet", betType: "single", status: "lost", stake: 35, returnAmount: 0, totalOdds: 2.1, placedAt: "2026-08-19T18:00:00.000Z", settledAt: "2026-08-19T21:00:00.000Z" };
+  if (lower.includes("cashout")) return { ...mockDefault, bookmakerName: "Betfair", betType: "single", status: "cashout", stake: 20, returnAmount: 27.5, placedAt: "2026-08-18T12:00:00.000Z", settledAt: "2026-08-18T16:20:00.000Z" };
+  if (lower.includes("pending")) return { ...mockDefault, bookmakerName: "SportyBet", betType: "accumulator", status: "pending", currency: "NGN", stake: 500, returnAmount: null, settledAt: null };
+  return mockDefault;
 }

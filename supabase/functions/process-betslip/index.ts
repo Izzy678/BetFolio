@@ -27,8 +27,9 @@ Deno.serve(async (request) => {
     const body = await request.json().catch(() => null) as { uploadId?: unknown } | null;
     uploadId = typeof body?.uploadId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.uploadId) ? body.uploadId : undefined;
     if (!uploadId) throw new Error("UPLOAD_NOT_FOUND");
-    const { data: upload } = await supabase.from("bet_uploads").select("*").eq("id", uploadId).eq("user_id", user.id).single();
-    if (!upload) throw new Error("UPLOAD_NOT_FOUND");
+    const { data: uploadRow } = await supabase.from("bet_uploads").select("*").eq("id", uploadId).eq("user_id", user.id).single();
+    if (!uploadRow) throw new Error("UPLOAD_NOT_FOUND");
+    let upload = uploadRow;
     if (upload.status === "imported") return json({ ok: true, status: "imported", uploadId });
     const { data: prior } = await supabase.from("bet_extractions").select("validation_issues,confidence_score").eq("upload_id", uploadId).eq("schema_version", SCHEMA_VERSION).maybeSingle();
     if (prior) return json({ ok: true, status: upload.status, uploadId, confidenceScore: prior.confidence_score, issues: prior.validation_issues });
@@ -43,10 +44,25 @@ Deno.serve(async (request) => {
     const bytes = new Uint8Array(await blob.arrayBuffer()); const mime = actualMime(bytes);
     if (!mime) throw new Error("UNSUPPORTED_FILE_TYPE");
     const hash = await sha256(bytes);
-    const { data: duplicate } = await supabase.from("bet_uploads").select("id").eq("user_id", user.id).eq("sha256", hash).is("duplicate_of", null).neq("id", uploadId).maybeSingle();
-    if (duplicate) { await supabase.from("bet_uploads").update({ status: "duplicate", duplicate_of: duplicate.id, sha256: null, error_code: "DUPLICATE_UPLOAD", error_message: "Exact file already uploaded." }).eq("id", uploadId); return json({ ok: false, code: "DUPLICATE_UPLOAD", duplicateOf: duplicate.id }, 409); }
-    const { error: hashError } = await supabase.from("bet_uploads").update({ sha256: hash, mime_type: mime, file_size_bytes: bytes.byteLength }).eq("id", uploadId);
-    if (hashError?.code === "23505") throw new Error("DUPLICATE_UPLOAD"); if (hashError) throw hashError;
+    const { data: duplicate } = await supabase.from("bet_uploads").select("id, status").eq("user_id", user.id).eq("sha256", hash).is("duplicate_of", null).neq("id", uploadId).maybeSingle();
+    if (duplicate) {
+      await supabase.from("bet_uploads").update({ status: "duplicate", duplicate_of: duplicate.id, sha256: null, error_code: "DUPLICATE_UPLOAD", error_message: "Exact file already uploaded." }).eq("id", uploadId);
+      if (duplicate.status === "imported") return json({ ok: false, code: "DUPLICATE_UPLOAD", duplicateOf: duplicate.id }, 409);
+      uploadId = duplicate.id;
+      const { data: canonical } = await supabase.from("bet_uploads").select("*").eq("id", uploadId).eq("user_id", user.id).single();
+      if (!canonical) throw new Error("UPLOAD_NOT_FOUND");
+      upload = canonical;
+      const { data: priorCanonical } = await supabase.from("bet_extractions").select("validation_issues,confidence_score").eq("upload_id", uploadId).eq("schema_version", SCHEMA_VERSION).maybeSingle();
+      if (priorCanonical) return json({ ok: true, status: upload.status, uploadId, confidenceScore: priorCanonical.confidence_score, issues: priorCanonical.validation_issues, reused: true });
+      if (upload.status === "failed") {
+        await supabase.from("bet_uploads").update({ status: "processing", error_code: null, error_message: null }).eq("id", uploadId);
+      } else if (!["uploaded", "processing"].includes(upload.status)) {
+        return json({ ok: true, uploadId, status: upload.status, reused: true });
+      }
+    } else {
+      const { error: hashError } = await supabase.from("bet_uploads").update({ sha256: hash, mime_type: mime, file_size_bytes: bytes.byteLength }).eq("id", uploadId);
+      if (hashError?.code === "23505") throw new Error("DUPLICATE_UPLOAD"); if (hashError) throw hashError;
+    }
     const mode = Deno.env.get("BETSLIP_AI_MODE") ?? "gemini";
     if (mode === "mock" && Deno.env.get("APP_ENV") === "production") throw new Error("GEMINI_FAILED");
     let raw: unknown; let provider: string; let model: string;
@@ -54,14 +70,23 @@ Deno.serve(async (request) => {
     else {
       const apiKey = Deno.env.get("GEMINI_API_KEY"); model = Deno.env.get("GEMINI_MODEL") ?? "";
       if (!apiKey || !model) throw new Error("GEMINI_FAILED");
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({ model, contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType: mime, data: toBase64(bytes) } }] }], config: { responseMimeType: "application/json", responseJsonSchema } });
-      if (!response.text) throw new Error("GEMINI_INVALID_RESPONSE"); raw = JSON.parse(response.text); provider = "google-gemini";
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({ model, contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType: mime, data: toBase64(bytes) } }] }], config: { responseMimeType: "application/json", responseJsonSchema } });
+        if (!response.text) throw new Error("GEMINI_INVALID_RESPONSE");
+        raw = JSON.parse(response.text);
+        provider = "google-gemini";
+      } catch (geminiError) {
+        console.error("Gemini extraction failed:", geminiError instanceof Error ? geminiError.message : geminiError);
+        throw new Error("GEMINI_FAILED");
+      }
     }
     const assessment = validateExtraction(raw);
     const { error: insertError } = await supabase.from("bet_extractions").insert({ upload_id: uploadId, user_id: user.id, provider, model, prompt_version: PROMPT_VERSION, schema_version: SCHEMA_VERSION, raw_response: raw, normalized_data: assessment.normalized, validation_issues: assessment.issues, confidence_score: assessment.score });
     if (insertError?.code !== "23505" && insertError) throw insertError;
     await supabase.from("bet_uploads").update({ status: assessment.status }).eq("id", uploadId);
+    const { error: deleteError } = await supabase.storage.from("betslips").remove([upload.storage_path]);
+    if (deleteError) console.warn("Failed to delete betslip after extraction:", deleteError.message);
     return json({ ok: true, uploadId, status: assessment.status, confidenceScore: assessment.score, issues: assessment.issues });
   } catch (error) {
     const code = codeFromError(error);

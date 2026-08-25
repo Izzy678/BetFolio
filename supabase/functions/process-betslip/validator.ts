@@ -1,23 +1,81 @@
-type Extraction = Record<string, unknown> & { documentType?: string; bookmaker?: { name?: string | null }; externalBetId?: string | null; betType?: string | null; status?: string | null; currency?: string | null; cashStake?: number | null; promotionalStake?: number | null; displayedReturn?: number | null; returnKind?: string | null; totalOddsRaw?: string | null; totalOddsDecimal?: number | null; oddsFormat?: string | null; legs?: unknown[] };
+type Extraction = {
+  bookmakerName?: string | null;
+  betType?: string | null;
+  status?: string | null;
+  currency?: string | null;
+  stake?: number | null;
+  returnAmount?: number | null;
+  totalOdds?: number | null;
+  placedAt?: string | null;
+  settledAt?: string | null;
+};
 
-const SYMBOLS: Record<string,string> = { "£":"GBP", "$":"USD", "€":"EUR", "₦":"NGN" };
+const STATUSES = new Set(["won", "lost", "cashout", "pending"]);
+const BET_TYPES = new Set(["single", "accumulator", "bet_builder", "system", "each_way", "other"]);
+const SYMBOLS: Record<string, string> = { "£": "GBP", "$": "USD", "€": "EUR", "₦": "NGN" };
+
+function money(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function normalizeBetType(value: unknown): string {
+  if (typeof value !== "string") return "single";
+  const raw = value.trim().toLowerCase();
+  if (BET_TYPES.has(raw)) return raw;
+  if (/multi|acca|accumulator|parlay|combo/.test(raw)) return "accumulator";
+  if (/builder/.test(raw)) return "bet_builder";
+  if (/system/.test(raw)) return "system";
+  if (/each.?way|eachway/.test(raw)) return "each_way";
+  return "single";
+}
+
+/** Keep day/month from OCR; force year to the current calendar year. */
+function parseDate(value: unknown, now = new Date()): string | null {
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw) return null;
+
+  let date: Date | null = null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    date = new Date(`${raw.slice(0, 10)}T12:00:00.000Z`);
+  } else {
+    const parsed = Date.parse(raw);
+    if (!Number.isNaN(parsed)) date = new Date(parsed);
+  }
+  if (!date || Number.isNaN(date.getTime())) return null;
+
+  date.setUTCFullYear(now.getUTCFullYear());
+  date.setUTCHours(12, 0, 0, 0);
+  return date.toISOString();
+}
+
 export function validateExtraction(input: unknown) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("GEMINI_INVALID_RESPONSE");
-  const extraction = input as Extraction; const issues: Array<{ field: string; code: string; message: string }> = [];
+  const extraction = input as Extraction;
+  const issues: Array<{ field: string; code: string; message: string }> = [];
   const currencyRaw = typeof extraction.currency === "string" ? extraction.currency.trim().toUpperCase() : null;
   const currency = currencyRaw ? SYMBOLS[currencyRaw] ?? (/^[A-Z]{3}$/.test(currencyRaw) ? currencyRaw : null) : null;
-  const normalized = { ...extraction, currency };
-  if (extraction.documentType !== "settled_betslip") issues.push({ field: "documentType", code: extraction.documentType === "unsettled_betslip" ? "BET_NOT_SETTLED" : "NOT_A_BETSLIP", message: "Only visibly settled betslips can be imported." });
-  for (const [field,value] of [["cashStake",extraction.cashStake],["promotionalStake",extraction.promotionalStake],["displayedReturn",extraction.displayedReturn],["totalOddsDecimal",extraction.totalOddsDecimal]] as const) if (value != null && (typeof value !== "number" || !Number.isFinite(value) || value < 0)) issues.push({ field, code: "INVALID_MONEY", message: `${field} must be a non-negative number.` });
-  if (!currency) issues.push({ field: "currency", code: "MISSING_CURRENCY", message: "Settlement currency needs confirmation." });
-  if (extraction.cashStake == null) issues.push({ field: "cashStake", code: "MISSING_STAKE", message: "Cash stake needs confirmation." });
-  if (!extraction.status) issues.push({ field: "status", code: "MISSING_STATUS", message: "Settlement status needs confirmation." });
-  if (extraction.status === "won" && extraction.displayedReturn == null) issues.push({ field: "displayedReturn", code: "MISSING_RETURN", message: "Winning bet return is missing." });
-  if (["won","cashout"].includes(extraction.status ?? "") && (!extraction.returnKind || extraction.returnKind === "unknown")) issues.push({ field: "returnKind", code: "AMBIGUOUS_RETURN", message: "Return meaning needs confirmation." });
-  if (extraction.status === "partial_cashout") issues.push({ field: "status", code: "PARTIAL_CASHOUT", message: "Partial cashouts require manual review." });
-  if ((extraction.status === "void" || extraction.status === "push") && extraction.cashStake != null && extraction.displayedReturn != null && Math.abs(extraction.cashStake - extraction.displayedReturn) > 0.009) issues.push({ field: "displayedReturn", code: "REFUND_MISMATCH", message: "A void/push refund must match the visible cash stake." });
-  if ((extraction.promotionalStake ?? 0) > 0 && extraction.status !== "lost") issues.push({ field: "promotionalStake", code: "PROMO_SETTLEMENT", message: "Promotional settlement accounting needs manual review." });
-  if (!Array.isArray(extraction.legs)) throw new Error("GEMINI_INVALID_RESPONSE");
-  const score = 100 - issues.length * 12 - (!extraction.bookmaker?.name ? 5 : 0) - (!extraction.externalBetId ? 4 : 0);
-  return { normalized, issues, score: Math.max(0, score), status: issues.length ? "needs_review" : "ready" };
+  const status = typeof extraction.status === "string" && STATUSES.has(extraction.status) ? extraction.status : null;
+  const normalized = {
+    bookmakerName: typeof extraction.bookmakerName === "string" ? extraction.bookmakerName.trim() || null : null,
+    betType: normalizeBetType(extraction.betType),
+    status,
+    currency,
+    stake: money(extraction.stake),
+    returnAmount: money(extraction.returnAmount),
+    totalOdds: money(extraction.totalOdds),
+    placedAt: parseDate(extraction.placedAt),
+    settledAt: status === "pending" ? null : parseDate(extraction.settledAt),
+  };
+
+  if (!normalized.bookmakerName) issues.push({ field: "bookmakerName", code: "MISSING_BOOKMAKER", message: "Bookmaker needs confirmation." });
+  if (!currency) issues.push({ field: "currency", code: "MISSING_CURRENCY", message: "Currency needs confirmation." });
+  if (normalized.stake == null) issues.push({ field: "stake", code: "MISSING_STAKE", message: "Stake needs confirmation." });
+  if (!status) issues.push({ field: "status", code: "MISSING_STATUS", message: "Bet status needs confirmation." });
+  if (!normalized.placedAt) issues.push({ field: "placedAt", code: "MISSING_PLACED_AT", message: "Enter the date this bet was placed (not the upload date)." });
+  if (status === "won" && normalized.returnAmount == null) issues.push({ field: "returnAmount", code: "MISSING_RETURN", message: "Winning return is missing." });
+  if (status === "cashout" && normalized.returnAmount == null) issues.push({ field: "returnAmount", code: "MISSING_RETURN", message: "Cashout amount is missing." });
+
+  const score = Math.max(0, 100 - issues.length * 15);
+  return { normalized, issues, score, status: issues.length ? "needs_review" : "ready" };
 }
