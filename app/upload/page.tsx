@@ -8,13 +8,13 @@ export default async function UploadPage() {
   const profile = await getCurrentProfile({ required: true });
   return (
     <AppShell username={profile!.username}>
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 lg:px-9 lg:py-8">
-        <p className="text-xs text-zinc-600">Add to your portfolio</p>
-        <h1 className="mt-1.5 text-2xl font-semibold tracking-[-.04em] sm:text-3xl">Import a settled bet</h1>
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+        <p className="text-xs font-bold uppercase tracking-[.15em] text-lime-300">New bet</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-[-.04em]">Add a settled bet</h1>
         <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-500">
-          Upload a betslip for structured extraction, or record the settlement manually.
+          Upload a betslip screenshot for AI extraction, or enter the details yourself.
         </p>
-        <div className="mt-7">
+        <div className="mt-8">
           <ImportEntry />
         </div>
       </div>

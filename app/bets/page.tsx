@@ -29,5 +29,5 @@ export default async function BetsPage() {
       settledAt: row.settled_at as string | null,
     })) satisfies BetListItem[];
   }
-  return <AppShell username={profile!.username}><div className="mx-auto max-w-[1450px] px-4 py-6 sm:px-7 lg:px-9 lg:py-8"><div className="flex items-end justify-between gap-4"><div><p className="text-xs text-zinc-600">Your confirmed ledger</p><h1 className="mt-1.5 text-2xl font-semibold tracking-[-.04em] sm:text-3xl">Bets</h1></div><ButtonLink href="/upload" className="h-9"><Plus className="size-4" /><span className="hidden sm:inline">Import bet</span></ButtonLink></div><BetsTable bets={bets} /></div></AppShell>;
+  return <AppShell username={profile!.username}><div className="mx-auto max-w-[1440px] px-5 py-7 sm:px-8 lg:px-10 lg:py-9"><div className="flex items-end justify-between"><div><p className="text-sm text-zinc-500">All confirmed settlements</p><h1 className="mt-1 text-3xl font-semibold tracking-[-.04em]">Bet history</h1></div><ButtonLink href="/upload" className="h-10"><Plus className="size-4" />Import bet</ButtonLink></div><BetsTable bets={bets} /></div></AppShell>;
 }

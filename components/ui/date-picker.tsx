@@ -36,6 +36,10 @@ export function DatePicker({
   const listId = useId();
 
   useEffect(() => {
+    if (selected) setMonth(selected);
+  }, [value]);
+
+  useEffect(() => {
     if (!open) return;
     function onPointerDown(event: MouseEvent) {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
@@ -67,7 +71,6 @@ export function DatePicker({
         aria-controls={listId}
         onClick={() => {
           if (disabled) return;
-          if (!open && selected) setMonth(selected);
           setOpen((current) => !current);
         }}
         className={cn(inputClass, "flex items-center justify-between gap-3 text-left disabled:cursor-not-allowed disabled:opacity-50")}
@@ -115,7 +118,7 @@ export function DatePicker({
                     "grid h-9 place-items-center rounded-lg text-sm transition",
                     !inMonth && "text-zinc-700",
                     inMonth && !isSelected && "text-zinc-200 hover:bg-white/[.07]",
-                    isSelected && "bg-violet-500 font-semibold text-white hover:bg-violet-400",
+                    isSelected && "bg-lime-300 font-semibold text-zinc-950 hover:bg-lime-300",
                   )}
                 >
                   {format(day, "d")}
@@ -137,7 +140,7 @@ export function DatePicker({
             </button>
             <button
               type="button"
-              className="rounded-lg px-2 py-1 text-xs font-medium text-violet-300 transition hover:bg-violet-400/10"
+              className="rounded-lg px-2 py-1 text-xs font-medium text-lime-300 transition hover:bg-lime-300/10"
               onClick={() => {
                 onChange(format(new Date(), "yyyy-MM-dd"));
                 setOpen(false);

@@ -66,7 +66,7 @@ export function ReviewForm({ uploadId, extraction, issues }: { uploadId: string;
     <ButtonLink href="/upload" variant="ghost" className="-ml-3 h-9"><ChevronLeft className="size-4" />Back to upload</ButtonLink>
     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300"><Check className="size-4" />Extraction complete</div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-lime-300"><Check className="size-4" />Extraction complete</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-[-.04em]">Review bet summary</h1>
         <p className="mt-2 text-sm text-zinc-500">Confirm the money in and money out. Game details are not tracked.</p>
       </div>
@@ -81,12 +81,12 @@ export function ReviewForm({ uploadId, extraction, issues }: { uploadId: string;
         </div>
       </Card>
       <Card className="p-5 sm:p-6">
-        <div className="mb-6 flex items-center gap-2"><PencilLine className="size-4 text-violet-300" /><h2 className="text-sm font-semibold">Bet summary</h2></div>
+        <div className="mb-6 flex items-center gap-2"><PencilLine className="size-4 text-lime-300" /><h2 className="text-sm font-semibold">Bet summary</h2></div>
         <BetFields form={form} onChange={update} warningFields={warningFields} />
-        <div className="mt-7 rounded-xl border border-white/[.07] bg-white/[.025] p-5">
+        <div className="mt-7 rounded-2xl border border-lime-300/15 bg-lime-300/[.055] p-5">
           <div className="flex items-end justify-between">
             <div><p className="text-xs font-medium text-zinc-500">Estimated P&amp;L</p><p className="mt-2 text-xs text-zinc-600">{form.status === "pending" ? "Pending bets only count stake until settled." : "Cash in minus cash out"}</p></div>
-            <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p>
+            <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p>
           </div>
         </div>
         {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}

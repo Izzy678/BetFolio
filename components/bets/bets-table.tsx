@@ -115,28 +115,31 @@ function RowActions({ betId, onDeleted }: { betId: string; onDeleted: (id: strin
 }
 
 export function BetsTable({ bets }: { bets: BetListItem[] }) {
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set());
+  const [rows, setRows] = useState(bets);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
   const [currency, setCurrency] = useState("all");
 
+  useEffect(() => {
+    setRows(bets);
+  }, [bets]);
+
   const filtered = useMemo(
     () =>
-      bets.filter(
+      rows.filter(
         (bet) =>
-          !deletedIds.has(bet.id) &&
           (!search || `${bet.bookmaker} ${bet.externalBetId}`.toLowerCase().includes(search.toLowerCase())) &&
           (status === "all" || bet.status === status) &&
           (type === "all" || bet.betType === type) &&
           (currency === "all" || bet.currency === currency),
       ),
-    [bets, deletedIds, search, status, type, currency],
+    [rows, search, status, type, currency],
   );
 
   return (
     <>
-      <Card className="mt-6 p-2.5">
+      <Card className="mt-7 p-3">
         <div className="grid gap-2 md:grid-cols-[1fr_repeat(3,150px)]">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600" />
@@ -156,7 +159,7 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
           </Select>
           <Select aria-label="Currency filter" value={currency} onChange={(e) => setCurrency(e.target.value)}>
             <option value="all">All currencies</option>
-            {[...new Set(bets.map((bet) => bet.currency))].map((item) => (
+            {[...new Set(rows.map((bet) => bet.currency))].map((item) => (
               <option key={item}>{item}</option>
             ))}
           </Select>
@@ -188,16 +191,16 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
                 <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">{formatMoney(bet.cashStake, bet.currency)}</Link>
                 <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">{bet.odds?.toFixed(2) ?? "—"}</Link>
                 <Link href={`/bets/${bet.id}`} className="hidden text-xs md:block">
-                  <span className={`rounded-full px-2 py-1 ${bet.status === "won" ? "bg-emerald-400/10 text-emerald-300" : bet.status === "lost" ? "bg-rose-400/10 text-rose-300" : "bg-white/[.05] text-zinc-400"}`}>
+                  <span className={`rounded-full px-2 py-1 ${bet.status === "won" ? "bg-lime-300/10 text-lime-300" : bet.status === "lost" ? "bg-red-300/10 text-red-300" : "bg-white/[.05] text-zinc-400"}`}>
                     {titleCase(bet.status)}
                   </span>
                 </Link>
-                <Link href={`/bets/${bet.id}`} className={`text-sm font-semibold md:text-xs ${bet.pnl > 0 ? "text-emerald-300" : bet.pnl < 0 ? "text-rose-300" : "text-zinc-400"}`}>
+                <Link href={`/bets/${bet.id}`} className={`text-sm font-semibold md:text-xs ${bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "text-zinc-400"}`}>
                   {formatMoney(bet.pnl, bet.currency, true)}
                 </Link>
                 <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-500 md:block">{formatDisplayDate(bet.placedAt)}</Link>
                 <div className="flex justify-end">
-                  <RowActions betId={bet.id} onDeleted={(id) => setDeletedIds((current) => new Set(current).add(id))} />
+                  <RowActions betId={bet.id} onDeleted={(id) => setRows((current) => current.filter((row) => row.id !== id))} />
                 </div>
                 <Link href={`/bets/${bet.id}`} className="col-span-2 flex gap-2 text-[11px] text-zinc-600 md:hidden">
                   <span>{titleCase(bet.betType)}</span>

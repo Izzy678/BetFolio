@@ -25,8 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Betfolio — Your betting portfolio";
-  const description = "Track settled bets across every platform and understand your real profit and loss.";
+  const title = "Betfolio — Betting P&L tracker";
+  const description = "Private, accurate profit-and-loss tracking across every betting platform.";
   return {
     title: { default: title, template: "%s · Betfolio" }, description,
     icons: { icon: "/favicon.svg" },
