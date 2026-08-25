@@ -31,7 +31,7 @@ const ToastContext = createContext<ToastApi | null>(null);
 const DEFAULT_DURATION = 3200;
 
 const toneStyles: Record<ToastTone, { wrap: string; icon: string; Icon: typeof Check }> = {
-  success: { wrap: "border-lime-300/20 bg-[#121416]", icon: "bg-lime-300/15 text-lime-300", Icon: Check },
+  success: { wrap: "border-emerald-400/20 bg-[#111612]", icon: "bg-emerald-400/15 text-emerald-300", Icon: Check },
   error: { wrap: "border-red-300/20 bg-[#161113]", icon: "bg-red-300/15 text-red-300", Icon: AlertTriangle },
   info: { wrap: "border-white/10 bg-[#121416]", icon: "bg-white/[.06] text-zinc-300", Icon: Info },
 };

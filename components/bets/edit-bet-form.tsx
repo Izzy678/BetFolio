@@ -104,17 +104,17 @@ export function EditBetForm({ bet }: { bet: EditableBet }) {
   return (
     <Card className="p-5 sm:p-6">
       <div className="mb-6 flex items-center gap-2">
-        <PencilLine className="size-4 text-lime-300" />
+        <PencilLine className="size-4 text-violet-300" />
         <h2 className="text-sm font-semibold">Edit bet</h2>
       </div>
       <BetFields form={form} onChange={update} />
-      <div className="mt-7 rounded-2xl border border-lime-300/15 bg-lime-300/[.055] p-5">
+      <div className="mt-7 rounded-xl border border-white/[.07] bg-white/[.025] p-5">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-xs font-medium text-zinc-500">Estimated P&amp;L</p>
             <p className="mt-2 text-xs text-zinc-600">Updates the dashboard graph to the placed date.</p>
           </div>
-          <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p>
+          <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p>
         </div>
       </div>
       {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}

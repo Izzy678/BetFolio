@@ -113,13 +113,13 @@ export function CredentialsForm() {
 
   return (
     <div>
-      <div className="mb-6 grid grid-cols-2 rounded-xl bg-black/25 p-1" role="tablist" aria-label="Account action">
+      <div className="mb-6 grid grid-cols-2 rounded-lg border border-white/[.055] bg-black/20 p-1" role="tablist" aria-label="Account action">
         <button
           type="button"
           role="tab"
           aria-selected={mode === "signup"}
           onClick={() => switchMode("signup")}
-          className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "signup" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+          className={`h-9 rounded-md text-sm font-medium transition ${mode === "signup" ? "bg-white/[.08] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
         >
           Create account
         </button>
@@ -128,7 +128,7 @@ export function CredentialsForm() {
           role="tab"
           aria-selected={mode === "login"}
           onClick={() => switchMode("login")}
-          className={`h-9 rounded-lg text-sm font-semibold transition ${mode === "login" ? "bg-white/[.09] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
+          className={`h-9 rounded-md text-sm font-medium transition ${mode === "login" ? "bg-white/[.08] text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
         >
           Sign in
         </button>
