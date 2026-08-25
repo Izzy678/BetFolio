@@ -1,53 +1,96 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Check, ChevronLeft, Loader2, PencilLine, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, Loader2, PencilLine } from "lucide-react";
+import { BetFields } from "@/components/bets/bet-fields";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, Input, Select } from "@/components/ui/field";
-import type { BetslipExtraction } from "@/lib/gemini/schema";
 import type { ValidationIssue } from "@/lib/betting/validation";
-import { createLedgerEntries, calculatePnl } from "@/lib/betting/ledger";
-import { betStatuses, betTypes, returnKinds, type ConfirmedBetInput } from "@/lib/betting/types";
+import { calculatePnl, createLedgerEntries } from "@/lib/betting/ledger";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { friendlyError } from "@/lib/errors";
+import { toConfirmedBetInput, type BetslipExtraction } from "@/lib/gemini/schema";
 import { formatMoney, titleCase } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
-export function ReviewForm({ uploadId, extraction, issues, sourceUrl }: { uploadId: string; extraction: BetslipExtraction; issues: ValidationIssue[]; sourceUrl?: string | null }) {
+export function ReviewForm({ uploadId, extraction, issues }: { uploadId: string; extraction: BetslipExtraction; issues: ValidationIssue[] }) {
   const [form, setForm] = useState<BetslipExtraction>(extraction);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const toast = useToast();
   const warningFields = new Set(issues.map((issue) => issue.field));
   const update = <K extends keyof BetslipExtraction>(key: K, value: BetslipExtraction[K]) => setForm((current) => ({ ...current, [key]: value }));
-  const input = useMemo<ConfirmedBetInput | null>(() => {
-    if (!form.betType || !form.status || !form.currency || form.cashStake == null) return null;
-    return { bookmakerName: form.bookmaker.name, externalBetId: form.externalBetId, betType: form.betType, status: form.status, currency: form.currency.toUpperCase(), cashStake: form.cashStake, promotionalStake: form.promotionalStake ?? 0, displayedReturn: form.displayedReturn, returnKind: form.returnKind, totalOddsRaw: form.totalOddsRaw, totalOddsDecimal: form.totalOddsDecimal, oddsFormat: form.oddsFormat, placedAt: form.placedAt, settledAt: form.settledAt, legs: form.legs };
-  }, [form]);
+  const input = useMemo(() => toConfirmedBetInput(form), [form]);
   let pnl: number | null = null;
-  try { if (input && input.promotionalStake === 0) pnl = calculatePnl(createLedgerEntries(input)); } catch { pnl = null; }
+  try { if (input) pnl = calculatePnl(createLedgerEntries(input)); } catch { pnl = null; }
 
   async function confirm() {
-    if (!input) return setError("Complete the highlighted required fields before importing.");
+    if (!input) {
+      const message = "Complete the highlighted fields before importing.";
+      setError(message);
+      toast.error("Can't import yet");
+      return;
+    }
     setPending(true); setError("");
     try {
       if (!isSupabaseConfigured()) { router.push("/bets/preview-1"); return; }
-      const { data, error: invokeError } = await createClient().functions.invoke("finalize-bet-import", { body: { uploadId, bet: input } });
-      if (invokeError || !data?.ok) throw new Error(data?.code ?? "INTERNAL_ERROR");
-      router.replace(`/bets/${data.betId}`); router.refresh();
-    } catch (caught) { setError(friendlyError(caught instanceof Error ? caught.message : undefined)); setPending(false); }
+      const supabase = createClient();
+      const { data: betId, error: rpcError } = await supabase.rpc("finalize_bet_import", {
+        p_upload_id: uploadId,
+        p_bet: input,
+      });
+      if (rpcError) {
+        const message = rpcError.message ?? "";
+        if (message.includes("BET_DUPLICATE") || rpcError.code === "23505") throw new Error("BET_DUPLICATE");
+        if (message.includes("UPLOAD_NOT_READY")) throw new Error("UPLOAD_NOT_READY");
+        if (message.includes("UPLOAD_NOT_FOUND")) throw new Error("UPLOAD_NOT_FOUND");
+        if (message.includes("PLACED_AT_REQUIRED") || message.includes("INVALID") || message.includes("UNSUPPORTED") || message.includes("RETURN_REQUIRED")) throw new Error("INVALID_IMPORT");
+        throw new Error("INTERNAL_ERROR");
+      }
+      if (!betId) throw new Error("INTERNAL_ERROR");
+      toast.success("Bet added");
+      router.push("/bets");
+    } catch (caught) {
+      const message = friendlyError(caught instanceof Error ? caught.message : undefined);
+      setError(message);
+      toast.error("Couldn't add bet");
+    } finally {
+      setPending(false);
+    }
   }
 
-  return <div><ButtonLink href="/upload" variant="ghost" className="-ml-3 h-9"><ChevronLeft className="size-4" />Back to upload</ButtonLink><div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><div className="flex items-center gap-2 text-xs font-semibold text-lime-300"><Check className="size-4" />Extraction complete</div><h1 className="mt-2 text-3xl font-semibold tracking-[-.04em]">Review bet details</h1><p className="mt-2 text-sm text-zinc-500">Check the slip against every field before adding it.</p></div><div className="rounded-xl border border-white/[.08] bg-white/[.03] px-3 py-2 text-xs text-zinc-500">Quality <span className="ml-1 font-semibold text-zinc-200">{Math.max(0, 100 - issues.length * 12)}%</span></div></div>
+  return <div>
+    <ButtonLink href="/upload" variant="ghost" className="-ml-3 h-9"><ChevronLeft className="size-4" />Back to upload</ButtonLink>
+    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div className="flex items-center gap-2 text-xs font-semibold text-lime-300"><Check className="size-4" />Extraction complete</div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-.04em]">Review bet summary</h1>
+        <p className="mt-2 text-sm text-zinc-500">Confirm the money in and money out. Game details are not tracked.</p>
+      </div>
+      <div className="rounded-xl border border-white/[.08] bg-white/[.03] px-3 py-2 text-xs text-zinc-500">Quality <span className="ml-1 font-semibold text-zinc-200">{Math.max(0, 100 - issues.length * 15)}%</span></div>
+    </div>
     {issues.length > 0 && <div className="mt-6 flex gap-3 rounded-2xl border border-amber-300/15 bg-amber-300/[.055] p-4 text-sm text-amber-100"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-300" /><div><p className="font-semibold">{issues.length} field{issues.length === 1 ? "" : "s"} need your attention</p><ul className="mt-1 grid gap-1 text-xs text-amber-100/60">{issues.map((issue) => <li key={issue.code}>{issue.message}</li>)}</ul></div></div>}
     <div className="mt-6 grid gap-5 xl:grid-cols-[.78fr_1.22fr]">
-      <Card className="overflow-hidden"><div className="flex items-center justify-between border-b border-white/[.07] px-5 py-4"><p className="text-sm font-semibold">Original betslip</p><span className="text-[11px] text-zinc-600">Private preview</span></div><div className="grid min-h-[520px] place-items-center bg-[#090a0b] p-5">{sourceUrl ? form.bookmaker.name?.toLowerCase().endsWith("pdf") ? <object data={sourceUrl} className="h-full min-h-[500px] w-full" aria-label="Betslip PDF" /> : <Image src={sourceUrl} alt="Original uploaded betslip" width={1200} height={1600} unoptimized className="max-h-[660px] w-auto max-w-full rounded-xl object-contain" /> : <div className="w-full max-w-sm rotate-[-1deg] rounded-2xl bg-[#edf3ee] p-6 text-zinc-900 shadow-2xl"><div className="flex items-center justify-between"><strong className="text-lg">{form.bookmaker.name ?? "BOOKMAKER"}</strong><span className="rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-bold text-white">{form.status?.toUpperCase() ?? "SETTLED"}</span></div><p className="mt-2 text-[10px] text-zinc-500">Bet ID {form.externalBetId ?? "Not visible"}</p><div className="my-5 border-t border-dashed border-zinc-300" />{form.legs.map((leg) => <div key={leg.position} className="mb-4 border-b border-zinc-200 pb-3"><p className="text-xs font-bold">{leg.selection ?? "Selection"}</p><p className="mt-1 text-[10px] text-zinc-500">{leg.eventName} · {leg.market}</p><p className="mt-1 text-xs">{leg.oddsRaw}</p></div>)}<div className="grid grid-cols-2 gap-4"><div><p className="text-[10px] text-zinc-500">Stake</p><p className="font-bold">{formatMoney(form.cashStake ?? 0, form.currency ?? "GBP")}</p></div><div><p className="text-[10px] text-zinc-500">Return</p><p className="font-bold">{formatMoney(form.displayedReturn ?? 0, form.currency ?? "GBP")}</p></div></div></div>}</div></Card>
-      <Card className="p-5 sm:p-6"><div className="mb-6 flex items-center gap-2"><PencilLine className="size-4 text-lime-300" /><h2 className="text-sm font-semibold">Extracted details</h2></div><div className="grid gap-5 sm:grid-cols-2"><Field label="Bookmaker"><Input value={form.bookmaker.name ?? ""} onChange={(e) => update("bookmaker", { name: e.target.value || null })} /></Field><Field label="Bet ID"><Input value={form.externalBetId ?? ""} onChange={(e) => update("externalBetId", e.target.value || null)} /></Field><Field label="Bet type" error={warningFields.has("betType") ? "Confirm this field" : undefined}><Select value={form.betType ?? ""} onChange={(e) => update("betType", e.target.value as BetslipExtraction["betType"])}><option value="">Choose type</option>{betTypes.map((value) => <option key={value} value={value}>{titleCase(value)}</option>)}</Select></Field><Field label="Final result" error={warningFields.has("status") ? "Confirm this field" : undefined}><Select value={form.status ?? ""} onChange={(e) => update("status", e.target.value as BetslipExtraction["status"])}><option value="">Choose result</option>{betStatuses.map((value) => <option key={value} value={value}>{titleCase(value)}</option>)}</Select></Field><Field label="Cash stake" error={warningFields.has("cashStake") ? "Cash stake is required" : undefined}><Input type="number" min="0" step="0.01" value={form.cashStake ?? ""} onChange={(e) => update("cashStake", e.target.value === "" ? null : Number(e.target.value))} /></Field><Field label="Promotional stake"><Input type="number" min="0" step="0.01" value={form.promotionalStake ?? ""} onChange={(e) => update("promotionalStake", e.target.value === "" ? null : Number(e.target.value))} /></Field><Field label="Displayed return" error={warningFields.has("displayedReturn") ? "Return is required" : undefined}><Input type="number" min="0" step="0.01" value={form.displayedReturn ?? ""} onChange={(e) => update("displayedReturn", e.target.value === "" ? null : Number(e.target.value))} /></Field><Field label="Return means" error={warningFields.has("returnKind") ? "Confirm return meaning" : undefined}><Select value={form.returnKind ?? ""} onChange={(e) => update("returnKind", e.target.value as BetslipExtraction["returnKind"])}><option value="">Choose meaning</option>{returnKinds.map((value) => <option key={value} value={value}>{titleCase(value)}</option>)}</Select></Field><Field label="Currency" error={warningFields.has("currency") ? "Currency is required" : undefined}><Input value={form.currency ?? ""} maxLength={3} onChange={(e) => update("currency", e.target.value.toUpperCase() || null)} placeholder="GBP" /></Field><Field label="Total odds"><Input type="number" min="0" step="0.001" value={form.totalOddsDecimal ?? ""} onChange={(e) => update("totalOddsDecimal", e.target.value === "" ? null : Number(e.target.value))} /></Field><Field label="Placed at"><Input type="datetime-local" value={form.placedAt?.slice(0, 16) ?? ""} onChange={(e) => update("placedAt", e.target.value || null)} /></Field><Field label="Settled at"><Input type="datetime-local" value={form.settledAt?.slice(0, 16) ?? ""} onChange={(e) => update("settledAt", e.target.value || null)} /></Field></div>
-        <div className="my-7 border-t border-white/[.07]" /><div className="flex items-center justify-between"><div><h3 className="text-sm font-semibold">Selections</h3><p className="mt-1 text-xs text-zinc-600">Legs never receive their own monetary P&amp;L.</p></div><Button variant="secondary" className="h-9" onClick={() => update("legs", [...form.legs, { position: form.legs.length + 1, sport: null, competition: null, eventName: null, market: null, selection: null, oddsRaw: null, oddsDecimal: null, result: "unknown" }])}><Plus className="size-3.5" />Add leg</Button></div><div className="mt-4 grid gap-3">{form.legs.map((leg, index) => <div key={leg.position} className="rounded-xl border border-white/[.07] bg-white/[.02] p-4"><div className="mb-3 flex items-center justify-between"><span className="text-xs font-semibold text-zinc-500">Selection {index + 1}</span><button aria-label={`Remove selection ${index + 1}`} onClick={() => update("legs", form.legs.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({ ...item, position: itemIndex + 1 })))} className="text-zinc-600 hover:text-red-300"><Trash2 className="size-4" /></button></div><div className="grid gap-3 sm:grid-cols-2"><Input aria-label={`Selection ${index + 1} event`} placeholder="Event" value={leg.eventName ?? ""} onChange={(e) => update("legs", form.legs.map((item, itemIndex) => itemIndex === index ? { ...item, eventName: e.target.value || null } : item))} /><Input aria-label={`Selection ${index + 1} market`} placeholder="Market" value={leg.market ?? ""} onChange={(e) => update("legs", form.legs.map((item, itemIndex) => itemIndex === index ? { ...item, market: e.target.value || null } : item))} /><Input aria-label={`Selection ${index + 1} pick`} placeholder="Selection" value={leg.selection ?? ""} onChange={(e) => update("legs", form.legs.map((item, itemIndex) => itemIndex === index ? { ...item, selection: e.target.value || null } : item))} /><Input aria-label={`Selection ${index + 1} odds`} type="number" placeholder="Odds" value={leg.oddsDecimal ?? ""} onChange={(e) => update("legs", form.legs.map((item, itemIndex) => itemIndex === index ? { ...item, oddsDecimal: e.target.value === "" ? null : Number(e.target.value) } : item))} /></div></div>)}</div>
-        <div className="mt-7 rounded-2xl border border-lime-300/15 bg-lime-300/[.055] p-5"><div className="flex items-end justify-between"><div><p className="text-xs font-medium text-zinc-500">Estimated P&amp;L</p><p className="mt-2 text-xs text-zinc-600">Calculated from ledger entries</p></div><p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p></div></div>{error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}<Button onClick={confirm} disabled={pending || pnl == null} className="mt-4 w-full">{pending ? <><Loader2 className="size-4 animate-spin" />Adding bet…</> : <><Check className="size-4" />Confirm &amp; add bet</>}</Button>
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between border-b border-white/[.07] px-5 py-4"><p className="text-sm font-semibold">Extracted summary</p><span className="text-[11px] text-zinc-600">Slip processed</span></div>
+        <div className="grid min-h-[520px] place-items-center bg-[#090a0b] p-5">
+          <div className="w-full max-w-sm rounded-2xl bg-[#edf3ee] p-6 text-zinc-900 shadow-2xl"><div className="flex items-center justify-between"><strong className="text-lg">{form.bookmakerName ?? "BOOKMAKER"}</strong><span className="rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-bold text-white">{form.status?.toUpperCase() ?? "SETTLED"}</span></div><p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{titleCase(form.betType ?? "single")}</p><div className="mt-6 grid grid-cols-2 gap-4"><div><p className="text-[10px] text-zinc-500">Stake</p><p className="font-bold">{formatMoney(form.stake ?? 0, form.currency ?? "GBP")}</p></div><div><p className="text-[10px] text-zinc-500">Return</p><p className="font-bold">{form.returnAmount == null ? "—" : formatMoney(form.returnAmount, form.currency ?? "GBP")}</p></div></div></div>
+        </div>
+      </Card>
+      <Card className="p-5 sm:p-6">
+        <div className="mb-6 flex items-center gap-2"><PencilLine className="size-4 text-lime-300" /><h2 className="text-sm font-semibold">Bet summary</h2></div>
+        <BetFields form={form} onChange={update} warningFields={warningFields} />
+        <div className="mt-7 rounded-2xl border border-lime-300/15 bg-lime-300/[.055] p-5">
+          <div className="flex items-end justify-between">
+            <div><p className="text-xs font-medium text-zinc-500">Estimated P&amp;L</p><p className="mt-2 text-xs text-zinc-600">{form.status === "pending" ? "Pending bets only count stake until settled." : "Cash in minus cash out"}</p></div>
+            <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}</p>
+          </div>
+        </div>
+        {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
+        <Button onClick={confirm} disabled={pending || pnl == null} className="mt-4 w-full">{pending ? <><Loader2 className="size-4 animate-spin" />Adding bet…</> : <><Check className="size-4" />Confirm &amp; add bet</>}</Button>
       </Card>
     </div>
   </div>;

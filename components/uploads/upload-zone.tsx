@@ -56,11 +56,28 @@ export function UploadZone() {
       if (storageError) throw new Error("INVALID_FILE");
       setStage("reading");
       const { data, error: processError } = await supabase.functions.invoke("process-betslip", { body: { uploadId } });
-      if (processError || !data?.ok) throw new Error(data?.code ?? "GEMINI_FAILED");
+      if (processError) {
+        const context = processError.context as Response | undefined;
+        const body = context ? await context.json().catch(() => null) as { code?: string; duplicateOf?: string } | null : null;
+        if (body?.code === "DUPLICATE_UPLOAD" && body.duplicateOf) {
+          const { data: retryData, error: retryError } = await supabase.functions.invoke("process-betslip", { body: { uploadId: body.duplicateOf } });
+          if (!retryError && retryData?.ok) {
+            setStage("checking");
+            await new Promise((resolve) => setTimeout(resolve, 350));
+            router.push(`/imports/${retryData.uploadId ?? body.duplicateOf}/review`);
+            return;
+          }
+        }
+        throw new Error(body?.code ?? "INTERNAL_ERROR");
+      }
+      if (!data?.ok) throw new Error(data?.code ?? "INTERNAL_ERROR");
       setStage("checking");
       await new Promise((resolve) => setTimeout(resolve, 350));
-      router.push(`/imports/${uploadId}/review`);
-    } catch (caught) { setError(friendlyError(caught instanceof Error ? caught.message : undefined)); setStage("idle"); }
+      router.push(`/imports/${data.uploadId ?? uploadId}/review`);
+    } catch (caught) {
+      setError(friendlyError(caught instanceof Error ? caught.message : undefined));
+      setStage("idle");
+    }
   }
 
   const stageIndex = stage === "uploading" ? 0 : stage === "reading" ? 1 : stage === "checking" ? 2 : -1;
