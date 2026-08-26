@@ -23,6 +23,8 @@ function CurveChart() {
   const h = 120;
   const max = Math.max(...curve);
   const min = Math.min(...curve);
+  const positive = curve[curve.length - 1]! >= curve[0]!;
+  const color = positive ? "#34d399" : "#fca5a5";
   const points = curve
     .map((v, i) => {
       const x = (i / (curve.length - 1)) * w;
@@ -37,15 +39,15 @@ function CurveChart() {
       <svg viewBox={`0 0 ${w} ${h}`} className="h-36 w-full max-w-full" preserveAspectRatio="none">
         <defs>
           <linearGradient id="landingPnlFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#bef264" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#bef264" stopOpacity="0" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
         <polygon points={area} fill="url(#landingPnlFill)" />
         <polyline
           points={points}
           fill="none"
-          stroke="#bef264"
+          stroke={color}
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -75,7 +77,7 @@ function DashboardFrame() {
           <span className="inline-flex h-9 items-center rounded-xl border border-white/10 bg-[#131417] px-3 text-xs font-semibold text-zinc-300">
             90 days
           </span>
-          <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-lime-300 px-3 text-xs font-bold text-zinc-950">
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-bold text-zinc-950">
             <Plus className="size-3.5" />
             Import
           </span>
@@ -87,8 +89,8 @@ function DashboardFrame() {
           <div className="relative col-span-2 overflow-hidden rounded-2xl border border-white/[.07] bg-[#121315] p-4">
             <p className="text-xs font-medium text-zinc-500">Net P&amp;L</p>
             <div className="mt-3 flex items-end gap-2">
-              <p className="text-4xl font-semibold tracking-[-0.045em] text-lime-300">+£186.40</p>
-              <ArrowUpRight className="mb-1 size-5 text-lime-300" />
+              <p className="text-4xl font-semibold tracking-[-0.045em] text-emerald-400">+£186.40</p>
+              <ArrowUpRight className="mb-1 size-5 text-emerald-400" />
             </div>
             <p className="mt-2 text-xs text-zinc-500">Across 87 settled bets</p>
           </div>
@@ -132,13 +134,13 @@ function DashboardFrame() {
                     <span className="min-w-0 truncate font-medium text-zinc-300">
                       {row.name} <span className="font-normal text-zinc-500">· {row.bets}</span>
                     </span>
-                    <span className={`shrink-0 tabular-nums ${row.loss ? "text-red-300" : "text-lime-300"}`}>
+                    <span className={`shrink-0 tabular-nums ${row.loss ? "text-red-300" : "text-emerald-400"}`}>
                       {row.pnl}
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-white/[.05]">
                     <div
-                      className={`h-full rounded-full ${row.loss ? "bg-red-300/70" : "bg-lime-300/70"}`}
+                      className={`h-full rounded-full ${row.loss ? "bg-red-300/70" : "bg-emerald-400/70"}`}
                       style={{ width: `${row.pct}%` }}
                     />
                   </div>
@@ -171,7 +173,7 @@ function DashboardFrame() {
                 <span className="tabular-nums text-xs text-zinc-400">{bet.stake}</span>
                 <span className="flex items-center gap-1.5 text-xs text-zinc-400">
                   {bet.status === "won" ? (
-                    <ArrowUpRight className="size-3.5 shrink-0 text-lime-300" />
+                    <ArrowUpRight className="size-3.5 shrink-0 text-emerald-400" />
                   ) : (
                     <ArrowDownRight className="size-3.5 shrink-0 text-red-300" />
                   )}
@@ -179,7 +181,7 @@ function DashboardFrame() {
                 </span>
                 <span
                   className={`shrink-0 text-right text-sm font-semibold tabular-nums ${
-                    bet.pnl.startsWith("+") ? "text-lime-300" : "text-red-300"
+                    bet.pnl.startsWith("+") ? "text-emerald-400" : "text-red-300"
                   }`}
                 >
                   {bet.pnl}

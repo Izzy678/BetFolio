@@ -22,7 +22,7 @@ export default function Home() {
     <main className="relative min-h-screen overflow-x-hidden bg-[#0b0c0e] text-white">
       <div className="noise absolute inset-x-0 top-0 h-[min(560px,100vw)] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
       <div
-        className="pointer-events-none absolute left-1/2 top-[-280px] h-[480px] w-[min(800px,160vw)] -translate-x-1/2 rounded-full bg-lime-300/[.05] blur-[100px] sm:top-[-360px] sm:h-[640px]"
+        className="pointer-events-none absolute left-1/2 top-[-280px] h-[480px] w-[min(800px,160vw)] -translate-x-1/2 rounded-full bg-white/[.03] blur-[100px] sm:top-[-360px] sm:h-[640px]"
         aria-hidden="true"
       />
 
@@ -73,7 +73,7 @@ export default function Home() {
           aria-hidden="true"
         >
           <div
-            className="pointer-events-none absolute left-1/2 top-[40%] h-[55%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime-300/[.04] blur-[80px]"
+            className="pointer-events-none absolute left-1/2 top-[40%] h-[55%] w-[90%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[.03] blur-[80px]"
             aria-hidden="true"
           />
           <LandingDashboardMock />
@@ -90,7 +90,7 @@ export default function Home() {
       >
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 max-w-xl sm:mb-7">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-300">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
               One clean workflow
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white sm:mt-3 sm:text-4xl">
@@ -124,7 +124,7 @@ export default function Home() {
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:gap-10 sm:px-8 sm:py-14 lg:grid-cols-2 lg:items-center">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-300">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
             Facts in. Accurate P&amp;L out.
           </p>
           <h2 className="mt-2 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-white sm:mt-3 sm:text-4xl">
@@ -145,8 +145,8 @@ export default function Home() {
                 key={item}
                 className="flex items-start gap-3 sm:items-center"
               >
-                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-lime-300/10 sm:mt-0">
-                  <Check className="size-3.5 text-lime-300" />
+                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-white/[.06] sm:mt-0">
+                  <Check className="size-3.5 text-zinc-200" />
                 </span>
                 <span>{item}</span>
               </div>
@@ -181,7 +181,7 @@ export default function Home() {
               <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
                 Est. P&amp;L
               </p>
-              <p className="mt-1 text-sm font-semibold text-lime-300">
+              <p className="mt-1 text-sm font-semibold text-emerald-400">
                 +£74.40
               </p>
               <p className="mt-1 text-[11px] text-zinc-400">
@@ -193,7 +193,7 @@ export default function Home() {
       </section>
 
       <section className="px-4 py-8 sm:px-8 sm:py-10">
-        <div className="mx-auto flex max-w-3xl flex-col items-start gap-4 rounded-2xl border border-lime-300/15 bg-lime-300/[.05] px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-7">
+        <div className="mx-auto flex max-w-3xl flex-col items-start gap-4 rounded-2xl border border-white/10 bg-white/[.03] px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-7">
           <div>
             <h2 className="text-xl font-semibold tracking-[-0.03em] text-white sm:text-2xl">
               Know your real numbers.
