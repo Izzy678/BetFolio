@@ -6,9 +6,9 @@ import { formatMoney } from "@/lib/utils";
 
 export function PnlChart({ data, currency }: { data: Array<{ date: string; cumulative: number }>; currency: string }) {
   return (
-    <div className="h-64 w-full">
+    <div className="h-52 w-full sm:h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 6, bottom: 0, left: -20 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -28 }}>
           <defs>
             <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#bef264" stopOpacity={.32} />
