@@ -69,14 +69,29 @@ export default async function BetDetailPage({ params }: { params: Promise<{ id: 
   ];
   return (
     <AppShell username={profile!.username}>
-      <div className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-10 lg:py-9">
-        <ButtonLink href="/bets" variant="ghost" className="-ml-3 h-9"><ArrowLeft className="size-4" />Bet history</ButtonLink>
-        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-8 sm:py-7 lg:px-10 lg:py-9">
+        <ButtonLink href="/bets" variant="ghost" className="-ml-2 h-10 sm:-ml-3 sm:h-9">
+          <ArrowLeft className="size-4" />
+          Bet history
+        </ButtonLink>
+        <div className="mt-4 flex flex-col gap-4 sm:mt-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${bet.status === "won" ? "bg-lime-300/10 text-lime-300" : bet.status === "lost" ? "bg-red-300/10 text-red-300" : "bg-white/[.06] text-zinc-400"}`}>{titleCase(bet.status)}</span>
+              <span
+                className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                  bet.status === "won"
+                    ? "bg-lime-300/10 text-lime-300"
+                    : bet.status === "lost"
+                      ? "bg-red-300/10 text-red-300"
+                      : "bg-white/[.06] text-zinc-400"
+                }`}
+              >
+                {titleCase(bet.status)}
+              </span>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-.04em]">{bet.bookmaker}</h1>
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em] sm:mt-3 sm:text-3xl">
+              {bet.bookmaker}
+            </h1>
           </div>
         </div>
         <div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
