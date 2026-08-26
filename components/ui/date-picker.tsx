@@ -118,7 +118,7 @@ export function DatePicker({
                     "grid h-9 place-items-center rounded-lg text-sm transition",
                     !inMonth && "text-zinc-700",
                     inMonth && !isSelected && "text-zinc-200 hover:bg-white/[.07]",
-                    isSelected && "bg-lime-300 font-semibold text-zinc-950 hover:bg-lime-300",
+                    isSelected && "bg-white font-semibold text-zinc-950 hover:bg-white",
                   )}
                 >
                   {format(day, "d")}
@@ -140,7 +140,7 @@ export function DatePicker({
             </button>
             <button
               type="button"
-              className="rounded-lg px-2 py-1 text-xs font-medium text-lime-300 transition hover:bg-lime-300/10"
+              className="rounded-lg px-2 py-1 text-xs font-medium text-zinc-300 transition hover:bg-white/[.06] hover:text-white"
               onClick={() => {
                 onChange(format(new Date(), "yyyy-MM-dd"));
                 setOpen(false);

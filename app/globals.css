@@ -24,7 +24,7 @@ body {
   overflow-x: clip;
 }
 
-::selection { background: rgba(190, 242, 100, .25); color: white; }
+::selection { background: rgba(255, 255, 255, .18); color: white; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button, select { cursor: pointer; }
 

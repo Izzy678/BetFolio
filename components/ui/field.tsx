@@ -1,7 +1,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export const inputClass = "h-11 w-full rounded-xl border border-white/10 bg-[#0d0e10] px-3.5 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-lime-300/60 focus:ring-2 focus:ring-lime-300/10";
+export const inputClass =
+  "h-11 w-full rounded-xl border border-white/10 bg-[#0d0e10] px-3.5 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-white/35 focus:ring-2 focus:ring-white/10";
 
 export function Field({ label, error, hint, children, className }: { label: string; error?: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
