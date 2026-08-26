@@ -83,7 +83,7 @@ function RowActions({ betId, onDeleted }: { betId: string; onDeleted: (id: strin
           setOpen((current) => !current);
           setConfirming(false);
         }}
-        className="grid size-8 place-items-center rounded-lg text-zinc-500 transition hover:bg-white/[.06] hover:text-zinc-200"
+        className="grid size-10 place-items-center rounded-lg text-zinc-500 transition hover:bg-white/[.06] hover:text-zinc-200"
       >
         <MoreHorizontal className="size-4" />
       </button>
@@ -129,7 +129,7 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
     () =>
       rows.filter(
         (bet) =>
-          (!search || `${bet.bookmaker} ${bet.externalBetId}`.toLowerCase().includes(search.toLowerCase())) &&
+          (!search || bet.bookmaker.toLowerCase().includes(search.toLowerCase())) &&
           (status === "all" || bet.status === status) &&
           (type === "all" || bet.betType === type) &&
           (currency === "all" || bet.currency === currency),
@@ -139,22 +139,31 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
 
   return (
     <>
-      <Card className="mt-7 p-3">
-        <div className="grid gap-2 md:grid-cols-[1fr_repeat(3,150px)]">
-          <div className="relative">
+      <Card className="mt-5 p-2.5 sm:mt-7 sm:p-3">
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-[1fr_repeat(3,150px)]">
+          <div className="relative sm:col-span-2 md:col-span-1">
             <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-zinc-600" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search bookmaker or Bet ID" className="pl-10" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search bookmaker"
+              className="pl-10"
+            />
           </div>
           <Select aria-label="Status filter" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="all">All statuses</option>
             {["won", "lost", "void", "cashout"].map((item) => (
-              <option key={item} value={item}>{titleCase(item)}</option>
+              <option key={item} value={item}>
+                {titleCase(item)}
+              </option>
             ))}
           </Select>
           <Select aria-label="Bet type filter" value={type} onChange={(e) => setType(e.target.value)}>
             <option value="all">All bet types</option>
             {["single", "accumulator", "bet_builder"].map((item) => (
-              <option key={item} value={item}>{titleCase(item)}</option>
+              <option key={item} value={item}>
+                {titleCase(item)}
+              </option>
             ))}
           </Select>
           <Select aria-label="Currency filter" value={currency} onChange={(e) => setCurrency(e.target.value)}>
@@ -165,7 +174,7 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
           </Select>
         </div>
       </Card>
-      <Card className="mt-4 overflow-hidden">
+      <Card className="mt-3 overflow-hidden sm:mt-4">
         <div className="hidden grid-cols-[1.2fr_1fr_.7fr_.7fr_.7fr_.7fr_.8fr_48px] gap-3 border-b border-white/[.07] px-5 py-3 text-[10px] font-bold uppercase tracking-[.11em] text-zinc-600 md:grid">
           <span>Bookmaker</span>
           <span>Bet</span>
@@ -178,42 +187,69 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
         </div>
         {filtered.length ? (
           <div className="divide-y divide-white/[.06]">
-            {filtered.map((bet) => (
-              <div
-                key={bet.id}
-                className="grid grid-cols-[1fr_auto] items-center gap-3 px-5 py-4 transition hover:bg-white/[.025] md:grid-cols-[1.2fr_1fr_.7fr_.7fr_.7fr_.7fr_.8fr_48px]"
-              >
-                <Link href={`/bets/${bet.id}`} className="min-w-0">
-                  <p className="text-sm font-semibold">{bet.bookmaker}</p>
-                  <p className="mt-1 text-[11px] text-zinc-600">{bet.externalBetId ?? "No Bet ID"}</p>
-                </Link>
-                <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">{titleCase(bet.betType)}</Link>
-                <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">{formatMoney(bet.cashStake, bet.currency)}</Link>
-                <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">{bet.odds?.toFixed(2) ?? "—"}</Link>
-                <Link href={`/bets/${bet.id}`} className="hidden text-xs md:block">
-                  <span className={`rounded-full px-2 py-1 ${bet.status === "won" ? "bg-lime-300/10 text-lime-300" : bet.status === "lost" ? "bg-red-300/10 text-red-300" : "bg-white/[.05] text-zinc-400"}`}>
-                    {titleCase(bet.status)}
-                  </span>
-                </Link>
-                <Link href={`/bets/${bet.id}`} className={`text-sm font-semibold md:text-xs ${bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "text-zinc-400"}`}>
-                  {formatMoney(bet.pnl, bet.currency, true)}
-                </Link>
-                <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-500 md:block">{formatDisplayDate(bet.placedAt)}</Link>
-                <div className="flex justify-end">
-                  <RowActions betId={bet.id} onDeleted={(id) => setRows((current) => current.filter((row) => row.id !== id))} />
+            {filtered.map((bet) => {
+              const pnlClass =
+                bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "text-zinc-400";
+
+              return (
+                <div
+                  key={bet.id}
+                  className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-white/[.025] md:grid md:grid-cols-[1.2fr_1fr_.7fr_.7fr_.7fr_.7fr_.8fr_48px] md:items-center md:gap-3 md:px-5 md:py-4"
+                >
+                  <Link href={`/bets/${bet.id}`} className="min-w-0 flex-1 md:flex-none">
+                    <p className="truncate text-sm font-semibold">{bet.bookmaker}</p>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-500 md:hidden">
+                      {titleCase(bet.betType)} · {formatMoney(bet.cashStake, bet.currency)} ·{" "}
+                      {titleCase(bet.status)}
+                      {bet.placedAt ? ` · ${formatDisplayDate(bet.placedAt)}` : ""}
+                    </p>
+                  </Link>
+                  <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">
+                    {titleCase(bet.betType)}
+                  </Link>
+                  <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">
+                    {formatMoney(bet.cashStake, bet.currency)}
+                  </Link>
+                  <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-400 md:block">
+                    {bet.odds?.toFixed(2) ?? "—"}
+                  </Link>
+                  <Link href={`/bets/${bet.id}`} className="hidden text-xs md:block">
+                    <span
+                      className={`rounded-full px-2 py-1 ${
+                        bet.status === "won"
+                          ? "bg-lime-300/10 text-lime-300"
+                          : bet.status === "lost"
+                            ? "bg-red-300/10 text-red-300"
+                            : "bg-white/[.05] text-zinc-400"
+                      }`}
+                    >
+                      {titleCase(bet.status)}
+                    </span>
+                  </Link>
+                  {/* Mobile: P&L + ⋯ sit together on the right. Desktop: dissolve into grid cells. */}
+                  <div className="flex shrink-0 items-start gap-0.5 md:contents">
+                    <Link
+                      href={`/bets/${bet.id}`}
+                      className={`pt-1.5 text-right text-sm font-semibold tabular-nums md:pt-0 md:text-left md:text-xs ${pnlClass}`}
+                    >
+                      {formatMoney(bet.pnl, bet.currency, true)}
+                    </Link>
+                    <Link href={`/bets/${bet.id}`} className="hidden text-xs text-zinc-500 md:block">
+                      {formatDisplayDate(bet.placedAt)}
+                    </Link>
+                    <div className="flex justify-end">
+                      <RowActions
+                        betId={bet.id}
+                        onDeleted={(id) => setRows((current) => current.filter((row) => row.id !== id))}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <Link href={`/bets/${bet.id}`} className="col-span-2 flex gap-2 text-[11px] text-zinc-600 md:hidden">
-                  <span>{titleCase(bet.betType)}</span>
-                  <span>·</span>
-                  <span>{formatMoney(bet.cashStake, bet.currency)}</span>
-                  <span>·</span>
-                  <span>{titleCase(bet.status)}</span>
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="px-5 py-20 text-center">
+          <div className="px-5 py-16 text-center sm:py-20">
             <SlidersHorizontal className="mx-auto size-6 text-zinc-700" />
             <p className="mt-4 font-semibold">No bets match these filters.</p>
             <p className="mt-2 text-sm text-zinc-600">Try widening your search.</p>
