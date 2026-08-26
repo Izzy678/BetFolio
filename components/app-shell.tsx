@@ -102,7 +102,7 @@ export function AppShell({ username, children }: { username: string; children: R
             onClick={() => setMenuOpen(false)}
             title="Import bet"
             className={cn(
-              "flex h-11 items-center justify-center gap-2 rounded-xl bg-lime-300 text-sm font-bold text-zinc-950 transition hover:bg-lime-200",
+              "flex h-11 items-center justify-center gap-2 rounded-xl bg-white text-sm font-bold text-zinc-950 transition hover:bg-zinc-100",
               compact && "px-0",
             )}
           >
@@ -220,7 +220,7 @@ export function AppShell({ username, children }: { username: string; children: R
         </div>
         <Link
           href="/upload"
-          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-lime-300 px-3 text-sm font-bold text-zinc-950"
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-zinc-950"
         >
           <Plus className="size-4" />
           Import
@@ -254,7 +254,7 @@ export function AppShell({ username, children }: { username: string; children: R
                   active ? "text-white" : "text-zinc-500",
                 )}
               >
-                <item.icon className={cn("size-5", active && "text-lime-300")} strokeWidth={active ? 2.25 : 2} />
+                <item.icon className="size-5" strokeWidth={active ? 2.25 : 2} />
                 {item.label}
               </Link>
             );
@@ -266,13 +266,13 @@ export function AppShell({ username, children }: { username: string; children: R
           >
             <span
               className={cn(
-                "grid size-12 -translate-y-3 place-items-center rounded-2xl bg-lime-300 text-zinc-950 shadow-lg shadow-lime-300/20",
-                uploadActive && "ring-2 ring-lime-200 ring-offset-2 ring-offset-[#0e0f11]",
+                "grid size-12 -translate-y-3 place-items-center rounded-2xl bg-white text-zinc-950 shadow-lg shadow-black/40",
+                uploadActive && "ring-2 ring-white/40 ring-offset-2 ring-offset-[#0e0f11]",
               )}
             >
               <Plus className="size-6" strokeWidth={2.5} />
             </span>
-            <span className={cn("text-[10px] font-semibold", uploadActive ? "text-lime-300" : "text-zinc-500")}>
+            <span className={cn("text-[10px] font-semibold", uploadActive ? "text-white" : "text-zinc-500")}>
               Import
             </span>
           </Link>
@@ -287,7 +287,7 @@ export function AppShell({ username, children }: { username: string; children: R
                   active ? "text-white" : "text-zinc-500",
                 )}
               >
-                <item.icon className={cn("size-5", active && "text-lime-300")} strokeWidth={active ? 2.25 : 2} />
+                <item.icon className="size-5" strokeWidth={active ? 2.25 : 2} />
                 {item.label}
               </Link>
             );
