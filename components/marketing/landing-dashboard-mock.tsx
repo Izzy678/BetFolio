@@ -6,16 +6,16 @@ const curve = [
 ];
 
 const recent = [
-  { book: "Atlas Bet", type: "Accumulator", stake: "£25.00", status: "won" as const, pnl: "+£42.50" },
-  { book: "Northstand", type: "Single", stake: "£35.00", status: "lost" as const, pnl: "−£35.00" },
-  { book: "Atlas Bet", type: "Single", stake: "£20.00", status: "won" as const, pnl: "+£18.20" },
-  { book: "Fieldbook", type: "Accumulator", stake: "£15.00", status: "lost" as const, pnl: "−£15.00" },
+  { book: "Bet365", type: "Accumulator", stake: "£25.00", status: "won" as const, pnl: "+£42.50" },
+  { book: "SportyBet", type: "Single", stake: "£35.00", status: "lost" as const, pnl: "−£35.00" },
+  { book: "Bet365", type: "Single", stake: "£20.00", status: "won" as const, pnl: "+£18.20" },
+  { book: "1xBet", type: "Accumulator", stake: "£15.00", status: "lost" as const, pnl: "−£15.00" },
 ];
 
 const books = [
-  { name: "Atlas Bet", bets: 34, pnl: "+£124.80", pct: 72, loss: false },
-  { name: "Northstand", bets: 28, pnl: "+£86.40", pct: 50, loss: false },
-  { name: "Fieldbook", bets: 25, pnl: "−£24.80", pct: 18, loss: true },
+  { name: "Bet365", bets: 34, pnl: "+£124.80", pct: 72, loss: false },
+  { name: "SportyBet", bets: 28, pnl: "+£86.40", pct: 50, loss: false },
+  { name: "1xBet", bets: 25, pnl: "−£24.80", pct: 18, loss: true },
 ];
 
 function CurveChart() {

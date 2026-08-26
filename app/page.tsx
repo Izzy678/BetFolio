@@ -156,7 +156,7 @@ export default function Home() {
         <div className="rounded-2xl border border-white/[.08] bg-[#121315] p-3 sm:p-5">
           <div className="rounded-2xl bg-[#e9f3ee] p-4 text-zinc-900 sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-black">Atlas Bet</span>
+              <span className="text-sm font-black">Bet365</span>
               <span className="rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-bold text-white">
                 WON
               </span>
