@@ -189,7 +189,7 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
           <div className="divide-y divide-white/[.06]">
             {filtered.map((bet) => {
               const pnlClass =
-                bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "text-zinc-400";
+                bet.pnl > 0 ? "text-emerald-400" : bet.pnl < 0 ? "text-red-300" : "text-zinc-400";
 
               return (
                 <div
@@ -217,7 +217,7 @@ export function BetsTable({ bets }: { bets: BetListItem[] }) {
                     <span
                       className={`rounded-full px-2 py-1 ${
                         bet.status === "won"
-                          ? "bg-lime-300/10 text-lime-300"
+                          ? "bg-emerald-400/10 text-emerald-400"
                           : bet.status === "lost"
                             ? "bg-red-300/10 text-red-300"
                             : "bg-white/[.05] text-zinc-400"

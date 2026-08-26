@@ -80,7 +80,7 @@ export default async function BetDetailPage({ params }: { params: Promise<{ id: 
               <span
                 className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
                   bet.status === "won"
-                    ? "bg-lime-300/10 text-lime-300"
+                    ? "bg-emerald-400/10 text-emerald-400"
                     : bet.status === "lost"
                       ? "bg-red-300/10 text-red-300"
                       : "bg-white/[.06] text-zinc-400"
@@ -102,7 +102,7 @@ export default async function BetDetailPage({ params }: { params: Promise<{ id: 
                 {facts.map(([label, value]) => (
                   <div key={label}>
                     <p className="text-[11px] font-medium text-zinc-600">{label}</p>
-                    <p className={`mt-1.5 text-sm font-semibold ${label === "Net P&L" ? (bet.pnl > 0 ? "text-lime-300" : bet.pnl < 0 ? "text-red-300" : "") : ""}`}>{value}</p>
+                    <p className={`mt-1.5 text-sm font-semibold ${label === "Net P&L" ? (bet.pnl > 0 ? "text-emerald-400" : bet.pnl < 0 ? "text-red-300" : "") : ""}`}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -124,7 +124,7 @@ export default async function BetDetailPage({ params }: { params: Promise<{ id: 
           </div>
           <Card className="h-fit p-5 sm:p-6">
             <div className="flex items-center gap-2">
-              <ReceiptText className="size-4 text-lime-300" />
+              <ReceiptText className="size-4 text-zinc-400" />
               <h2 className="text-sm font-semibold">Ledger</h2>
             </div>
             <p className="mt-2 text-xs leading-5 text-zinc-600">Cash movements used for your P&amp;L.</p>
@@ -139,13 +139,13 @@ export default async function BetDetailPage({ params }: { params: Promise<{ id: 
                         : (bet.settledAt ? formatDisplayDate(bet.settledAt) : "Settlement date")}
                     </p>
                   </div>
-                  <span className={`text-sm font-semibold ${entry.amount > 0 ? "text-lime-300" : "text-zinc-300"}`}>{formatMoney(entry.amount, bet.currency, true)}</span>
+                  <span className={`text-sm font-semibold ${entry.amount > 0 ? "text-emerald-400" : "text-zinc-300"}`}>{formatMoney(entry.amount, bet.currency, true)}</span>
                 </div>
               ))}
             </div>
             <div className="mt-3 flex items-center justify-between rounded-xl bg-white/[.04] p-4">
               <span className="text-xs font-semibold text-zinc-500">Net P&amp;L</span>
-              <span className={`text-lg font-semibold ${bet.pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>{formatMoney(bet.pnl, bet.currency, true)}</span>
+              <span className={`text-lg font-semibold ${bet.pnl >= 0 ? "text-emerald-400" : "text-red-300"}`}>{formatMoney(bet.pnl, bet.currency, true)}</span>
             </div>
           </Card>
         </div>
