@@ -36,18 +36,17 @@ export function DashboardView({
 
       <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-7 sm:gap-3 lg:grid-cols-6">
         <Card className="relative col-span-2 overflow-hidden p-4 sm:p-5 lg:col-span-2">
-          <div className="absolute right-[-45px] top-[-65px] size-44 rounded-full bg-lime-300/[.05] blur-3xl" />
           <p className="text-xs font-medium text-zinc-500">Net P&amp;L</p>
           <div className="mt-3 flex items-end gap-2 sm:mt-4">
             <p
               className={`text-3xl font-semibold tracking-[-0.045em] sm:text-4xl ${
-                summary.netPnl >= 0 ? "text-lime-300" : "text-red-300"
+                summary.netPnl >= 0 ? "text-emerald-400" : "text-red-300"
               }`}
             >
               {formatMoney(summary.netPnl, currency, true)}
             </p>
             {summary.netPnl >= 0 ? (
-              <ArrowUpRight className="mb-0.5 size-5 text-lime-300 sm:mb-1" />
+              <ArrowUpRight className="mb-0.5 size-5 text-emerald-400 sm:mb-1" />
             ) : (
               <ArrowDownRight className="mb-0.5 size-5 text-red-300 sm:mb-1" />
             )}
@@ -93,14 +92,14 @@ export function DashboardView({
                         <span className="font-normal text-zinc-600">· {bookmaker.bets}</span>
                       </span>
                       <span
-                        className={`shrink-0 tabular-nums ${bookmaker.pnl >= 0 ? "text-lime-300" : "text-red-300"}`}
+                        className={`shrink-0 tabular-nums ${bookmaker.pnl >= 0 ? "text-emerald-400" : "text-red-300"}`}
                       >
                         {formatMoney(bookmaker.pnl, currency, true)}
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/[.05]">
                       <div
-                        className={`h-full rounded-full ${bookmaker.pnl >= 0 ? "bg-lime-300/70" : "bg-red-300/70"}`}
+                        className={`h-full rounded-full ${bookmaker.pnl >= 0 ? "bg-emerald-400/70" : "bg-red-300/70"}`}
                         style={{
                           width: `${Math.max(8, Math.min(100, (Math.abs(bookmaker.pnl) / max) * 100))}%`,
                         }}
@@ -152,7 +151,7 @@ export function DashboardView({
                 <span className="hidden items-center gap-2 text-xs text-zinc-400 sm:flex">
                   <span className="grid size-4 shrink-0 place-items-center">
                     {bet.status === "won" ? (
-                      <ArrowUpRight className="size-3.5 text-lime-300" />
+                      <ArrowUpRight className="size-3.5 text-emerald-400" />
                     ) : bet.status === "lost" ? (
                       <ArrowDownRight className="size-3.5 text-red-300" />
                     ) : (
@@ -163,7 +162,7 @@ export function DashboardView({
                 </span>
                 <span
                   className={`text-right text-sm font-semibold tabular-nums ${
-                    bet.pnl >= 0 ? "text-lime-300" : "text-red-300"
+                    bet.pnl >= 0 ? "text-emerald-400" : "text-red-300"
                   }`}
                 >
                   {formatMoney(bet.pnl, currency, true)}
