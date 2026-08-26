@@ -73,17 +73,17 @@ export function ManualBetForm() {
   return (
     <Card className="mx-auto max-w-2xl p-5 sm:p-6">
       <div className="mb-6 flex items-center gap-2">
-        <PencilLine className="size-4 text-lime-300" />
+        <PencilLine className="size-4 text-zinc-400" />
         <h2 className="text-sm font-semibold">Bet details</h2>
       </div>
       <BetFields form={form} onChange={update} warningFields={warningFields} />
-      <div className="mt-7 rounded-2xl border border-lime-300/15 bg-lime-300/[.055] p-5">
+      <div className="mt-7 rounded-2xl border border-white/10 bg-white/[.03] p-5">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-xs font-medium text-zinc-500">Estimated P&amp;L</p>
             <p className="mt-2 text-xs text-zinc-600">{form.status === "pending" ? "Pending bets only count stake until settled." : "Cash in minus cash out"}</p>
           </div>
-          <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-lime-300" : "text-red-300"}`}>
+          <p className={`text-3xl font-semibold tracking-[-.04em] ${pnl == null ? "text-zinc-500" : pnl >= 0 ? "text-emerald-400" : "text-red-300"}`}>
             {pnl == null ? "—" : formatMoney(pnl, form.currency ?? "GBP", true)}
           </p>
         </div>

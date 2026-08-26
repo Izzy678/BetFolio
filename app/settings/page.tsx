@@ -24,7 +24,7 @@ export default async function SettingsPage() {
               <div>
                 <p className="text-xs text-zinc-600">Account status</p>
                 <p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold">
-                  <ShieldCheck className="size-4 text-lime-300" />
+                  <ShieldCheck className="size-4 text-zinc-400" />
                   Password-protected account
                 </p>
               </div>
