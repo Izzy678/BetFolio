@@ -1,8 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ButtonLink } from "@/components/ui/button";
 
 export function DashboardFilters({
   currency,
@@ -45,10 +43,6 @@ export function DashboardFilters({
         <option value="90">90 days</option>
         <option value="all">All time</option>
       </select>
-      <ButtonLink href="/upload" className="hidden h-10 sm:inline-flex">
-        <Plus className="size-4" />
-        Import
-      </ButtonLink>
     </div>
   );
 }

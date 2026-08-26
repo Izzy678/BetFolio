@@ -1,7 +1,5 @@
-import { Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { BetsTable } from "@/components/bets/bets-table";
-import { ButtonLink } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/auth";
 import { previewBets, type BetListItem } from "@/lib/bets";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -42,10 +40,6 @@ export default async function BetsPage() {
             <p className="text-sm text-zinc-500">All confirmed settlements</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">Bet history</h1>
           </div>
-          <ButtonLink href="/upload" className="hidden h-10 shrink-0 sm:inline-flex">
-            <Plus className="size-4" />
-            Import bet
-          </ButtonLink>
         </div>
         <BetsTable bets={bets} />
       </div>

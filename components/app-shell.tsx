@@ -205,26 +205,17 @@ export function AppShell({ username, children }: { username: string; children: R
 
       {/* Mobile top bar */}
       <header
-        className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-white/[.07] bg-[#0b0c0e]/92 px-4 backdrop-blur safe-top lg:hidden"
+        className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-white/[.07] bg-[#0b0c0e]/92 px-4 backdrop-blur safe-top lg:hidden"
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 text-zinc-300"
-            aria-label="Open menu"
-          >
-            <Menu className="size-4" />
-          </button>
-          <Brand compact href="/dashboard" />
-        </div>
-        <Link
-          href="/upload"
-          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-bold text-zinc-950"
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 text-zinc-300"
+          aria-label="Open menu"
         >
-          <Plus className="size-4" />
-          Import
-        </Link>
+          <Menu className="size-4" />
+        </button>
+        <Brand compact href="/dashboard" />
       </header>
 
       <main
