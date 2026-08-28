@@ -7,6 +7,17 @@ import { formatMoney } from "@/lib/utils";
 const POSITIVE = "#34d399"; // emerald-400
 const NEGATIVE = "#fca5a5"; // red-300
 
+/** Compact axis labels so NGN / large values don't clip on narrow charts. */
+function formatYAxisTick(value: number) {
+  if (value === 0) return "0";
+  const sign = value < 0 ? "−" : "+";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}m`;
+  if (abs >= 10_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(1)}k`;
+  return `${sign}${Math.round(abs)}`;
+}
+
 export function PnlChart({
   data,
   currency,
@@ -22,7 +33,7 @@ export function PnlChart({
   return (
     <div className="h-52 w-full sm:h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -28 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.28} />
@@ -36,13 +47,14 @@ export function PnlChart({
             tickLine={false}
             tick={{ fill: "#71717a", fontSize: 11 }}
             tickFormatter={(value) => formatDisplayDate(String(value), "d MMM")}
-            minTickGap={30}
+            minTickGap={24}
           />
           <YAxis
+            width={44}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#71717a", fontSize: 11 }}
-            tickFormatter={(value) => `${value >= 0 ? "+" : ""}${Math.round(value)}`}
+            tick={{ fill: "#71717a", fontSize: 10 }}
+            tickFormatter={formatYAxisTick}
           />
           <Tooltip
             cursor={{ stroke: positive ? "rgba(52,211,153,.28)" : "rgba(252,165,165,.28)" }}
